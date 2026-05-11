@@ -1,6 +1,7 @@
 import AppKit
 import PaddlrCore
 import SwiftUI
+import UniformTypeIdentifiers
 
 private struct ContentSizePreferenceKey: PreferenceKey {
     static var defaultValue: CGSize = .zero
@@ -94,16 +95,16 @@ struct MappingPanelView: View {
             selectDefaultAppIfNeeded()
             syncProfileForSelectedApplication()
         }
-        .onChange(of: model.frontmostApplication?.ruleKey) { _ in
+        .onChange(of: model.frontmostApplication?.ruleKey) { _, _ in
             selectDefaultAppIfNeeded()
         }
-        .onChange(of: selectedAppBundleIdentifier) { _ in
+        .onChange(of: selectedAppBundleIdentifier) { _, _ in
             syncProfileForSelectedApplication()
         }
-        .onChange(of: model.selectedControllerIdentifier) { _ in
+        .onChange(of: model.selectedControllerIdentifier) { _, _ in
             syncProfileForSelectedApplication()
         }
-        .onChange(of: model.mappingChangeRevision) { _ in
+        .onChange(of: model.mappingChangeRevision) { _, _ in
             guard !model.lastChangedPaddles.isEmpty else {
                 clearPendingMappingChanges()
                 return
@@ -652,7 +653,7 @@ struct MappingPanelView: View {
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
-        panel.allowedFileTypes = ["app"]
+        panel.allowedContentTypes = [.applicationBundle]
 
         panel.begin { response in
             guard response == .OK, let appURL = panel.url else {
@@ -1172,7 +1173,7 @@ private struct AppPickerButton: NSViewRepresentable {
             defaultImage.isTemplate = true
             image = defaultImage
         } else {
-            image = NSWorkspace.shared.icon(forFileType: "app")
+            image = NSWorkspace.shared.icon(for: .applicationBundle)
         }
 
         let resizedImage = image?.copy() as? NSImage
