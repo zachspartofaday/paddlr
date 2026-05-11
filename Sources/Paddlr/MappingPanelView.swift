@@ -28,8 +28,7 @@ private struct AppSelection: Identifiable, Hashable {
 
 private enum ProfileAssignmentTarget: Equatable {
     case defaultApplication
-    case application(bundleIdentifier: String, appName: String)
-    case controller(identifier: String)
+    case application(bundleIdentifier: String, appName: String, controllerIdentifier: String?)
 }
 
 private struct PendingMappingSave: Equatable {
@@ -217,24 +216,6 @@ struct MappingPanelView: View {
                     )
                     .frame(width: Self.selectorWidth, height: 24, alignment: .leading)
 
-                    if model.selectedControllerHasProfileAssignment {
-                        Button {
-                            clearSelectedControllerProfileAssignment()
-                        } label: {
-                            Image(systemName: "arrow.uturn.backward")
-                        }
-                        .buttonStyle(.borderless)
-                        .help("Use App/default Mappings")
-                    } else if model.selectedControllerSelection != nil {
-                        Button {
-                            assignSelectedProfileToSelectedController()
-                        } label: {
-                            Image(systemName: "link")
-                        }
-                        .buttonStyle(.borderless)
-                        .help("Assign Selected Profile to Controller")
-                    }
-
                     Button {
                         beginCreatingProfile()
                     } label: {
@@ -298,8 +279,7 @@ struct MappingPanelView: View {
             return diagnosticProfileDetailText
         }
 
-        guard !model.selectedControllerHasProfileAssignment,
-              model.effectiveProfile.id != model.selectedProfileID else {
+        guard model.effectiveProfile.id != model.selectedProfileID else {
             return nil
         }
 
@@ -307,15 +287,7 @@ struct MappingPanelView: View {
     }
 
     private var diagnosticProfileDetailText: String {
-        if model.selectedControllerSelection != nil {
-            guard model.selectedControllerHasProfileAssignment else {
-                return "Controller follows app/default mappings"
-            }
-
-            return "Controller profile: \(model.selectedProfileName)"
-        }
-
-        return "Effective profile: \(model.effectiveProfileName)"
+        "Effective profile: \(model.effectiveProfileName)"
     }
 
     private var currentAppSection: some View {
@@ -413,7 +385,10 @@ struct MappingPanelView: View {
             return nil
         }
 
-        return model.appRules.first(where: { $0.bundleIdentifier == selectedApp.bundleIdentifier })
+        return model.appRule(
+            bundleIdentifier: selectedApp.bundleIdentifier,
+            controllerIdentifier: model.selectedControllerIdentifier
+        )
     }
 
     private var selectedApplicationIsPinned: Bool {
@@ -454,12 +429,14 @@ struct MappingPanelView: View {
                 } else if isEnabled {
                     model.assignAppToSelectedProfile(
                         bundleIdentifier: selectedApp.bundleIdentifier,
-                        appName: selectedApp.appName
+                        appName: selectedApp.appName,
+                        controllerIdentifier: model.selectedControllerIdentifier
                     )
                 } else {
                     model.disableOutputForApp(
                         bundleIdentifier: selectedApp.bundleIdentifier,
-                        appName: selectedApp.appName
+                        appName: selectedApp.appName,
+                        controllerIdentifier: model.selectedControllerIdentifier
                     )
                 }
             }
@@ -491,16 +468,13 @@ struct MappingPanelView: View {
     }
 
     private func syncProfileForSelectedApplication() {
-        guard model.selectedControllerSelection == nil || !model.selectedControllerHasProfileAssignment else {
-            return
-        }
-
         guard let selectedApp else {
             return
         }
 
         model.syncSelectedProfileForApplication(
-            bundleIdentifier: selectedApp.isDefault ? nil : selectedApp.bundleIdentifier
+            bundleIdentifier: selectedApp.isDefault ? nil : selectedApp.bundleIdentifier,
+            controllerIdentifier: model.selectedControllerIdentifier
         )
     }
 
@@ -520,11 +494,6 @@ struct MappingPanelView: View {
     }
 
     private var currentProfileAssignmentTarget: ProfileAssignmentTarget? {
-        if model.selectedControllerHasProfileAssignment,
-           let controllerIdentifier = model.selectedControllerSelection?.identifier {
-            return .controller(identifier: controllerIdentifier)
-        }
-
         guard selectedApplicationOutputEnabled, let selectedApp else {
             return nil
         }
@@ -533,7 +502,11 @@ struct MappingPanelView: View {
             return .defaultApplication
         }
 
-        return .application(bundleIdentifier: selectedApp.bundleIdentifier, appName: selectedApp.appName)
+        return .application(
+            bundleIdentifier: selectedApp.bundleIdentifier,
+            appName: selectedApp.appName,
+            controllerIdentifier: model.selectedControllerIdentifier
+        )
     }
 
     private func assignProfile(_ profileID: UUID, to target: ProfileAssignmentTarget?) {
@@ -544,10 +517,13 @@ struct MappingPanelView: View {
         switch target {
         case .defaultApplication:
             model.useProfileForDefaultApplication(profileID: profileID)
-        case .application(let bundleIdentifier, let appName):
-            model.assignApp(bundleIdentifier: bundleIdentifier, appName: appName, toProfileID: profileID)
-        case .controller(let identifier):
-            model.assignProfile(profileID, toControllerIdentifier: identifier)
+        case .application(let bundleIdentifier, let appName, let controllerIdentifier):
+            model.assignApp(
+                bundleIdentifier: bundleIdentifier,
+                appName: appName,
+                controllerIdentifier: controllerIdentifier,
+                toProfileID: profileID
+            )
         }
     }
 
@@ -598,17 +574,6 @@ struct MappingPanelView: View {
         }
 
         model.pinSelectedController(displayName: trimmedName)
-    }
-
-    private func assignSelectedProfileToSelectedController() {
-        model.assignSelectedProfileToSelectedController()
-        clearPendingMappingChanges()
-    }
-
-    private func clearSelectedControllerProfileAssignment() {
-        model.clearSelectedControllerProfileAssignment()
-        clearPendingMappingChanges()
-        syncProfileForSelectedApplication()
     }
 
     private func resetDefaultProfileMappings() {

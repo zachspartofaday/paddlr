@@ -229,7 +229,7 @@ final class MenuBarMapperModel: ObservableObject {
             return nil
         }
 
-        return appRules.first(where: { $0.bundleIdentifier == ruleKey })
+        return appRule(bundleIdentifier: ruleKey, controllerIdentifier: selectedControllerIdentifier)
     }
 
     var effectiveProfile: MappingProfile {
@@ -250,20 +250,7 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     var effectiveOutputEnabled: Bool {
-        guard outputEnabled else {
-            return false
-        }
-
-        guard let activeAppRule else {
-            return defaultApplicationOutputEnabled
-        }
-
-        switch activeAppRule.action {
-        case .useProfile:
-            return true
-        case .disableOutput:
-            return false
-        }
+        effectiveOutputEnabled(forControllerIdentifier: selectedControllerIdentifier)
     }
 
     var currentAppRuleDescription: String {
@@ -328,14 +315,6 @@ final class MenuBarMapperModel: ObservableObject {
         selectedControllerSelection?.hasCustomDisplayName == true
     }
 
-    var selectedControllerHasProfileAssignment: Bool {
-        guard let identifier = selectedControllerSelection?.identifier else {
-            return false
-        }
-
-        return controllerConfiguration(for: identifier)?.profileID != nil
-    }
-
     private var selectedControllerPressedPaddles: Set<Paddle> {
         guard let identifier = selectedControllerIdentifier else {
             return Set(livePressedPaddlesByController.values.flatMap { $0 })
@@ -374,12 +353,7 @@ final class MenuBarMapperModel: ObservableObject {
         let initialSelectedProfileID = savedSelectedProfileID.flatMap { savedID in
             resolvedProfiles.contains(where: { $0.id == savedID }) ? savedID : nil
         } ?? fallbackSelectedProfileID
-        let restoredControllerProfileID = Self.controllerProfileID(
-            for: restoredControllerIdentifier,
-            in: loadedControllerConfigurations,
-            profiles: resolvedProfiles
-        )
-        self.selectedProfileID = restoredControllerProfileID ?? initialSelectedProfileID
+        self.selectedProfileID = initialSelectedProfileID
         self.defaultSelectedProfileID = initialSelectedProfileID
 
         self.outputEnabled = Self.boolDefault(
@@ -504,39 +478,6 @@ final class MenuBarMapperModel: ObservableObject {
 
         appendEvent("[Controller] Unpinned \(controller.displayName).")
         syncSelectedControllerAfterStatusChange()
-    }
-
-    func assignSelectedProfileToSelectedController() {
-        guard let controller = selectedControllerSelection else {
-            return
-        }
-
-        assignProfile(selectedProfileID, toControllerIdentifier: controller.identifier)
-    }
-
-    func assignProfile(_ profileID: UUID, toControllerIdentifier identifier: String) {
-        guard let profile = profiles.first(where: { $0.id == profileID }) else {
-            return
-        }
-
-        let fallbackName = connectedControllerSelections.first(where: { $0.identifier == identifier })?.productName ?? identifier
-        releasePostedKeys(for: [identifier], reason: "controller profile changed")
-        updateControllerConfiguration(identifier: identifier) { configuration in
-            configuration.profileID = profileID
-        }
-        appendEvent("[Controller] \(controllerDisplayName(for: identifier, fallback: fallbackName)) uses \(profile.name).")
-    }
-
-    func clearSelectedControllerProfileAssignment() {
-        guard let controller = selectedControllerSelection else {
-            return
-        }
-
-        releasePostedKeys(for: [controller.identifier], reason: "controller profile cleared")
-        updateControllerConfiguration(identifier: controller.identifier) { configuration in
-            configuration.profileID = nil
-        }
-        appendEvent("[Controller] \(controller.displayName) follows app/default mappings.")
     }
 
     func isPressed(_ paddle: Paddle) -> Bool {
@@ -681,6 +622,7 @@ final class MenuBarMapperModel: ObservableObject {
             AppProfileRule(
                 bundleIdentifier: bundleIdentifier,
                 appName: app.displayName,
+                controllerIdentifier: selectedControllerIdentifier,
                 action: .useProfile(selectedProfileID)
             )
         )
@@ -696,6 +638,7 @@ final class MenuBarMapperModel: ObservableObject {
             AppProfileRule(
                 bundleIdentifier: bundleIdentifier,
                 appName: app.displayName,
+                controllerIdentifier: selectedControllerIdentifier,
                 action: .disableOutput
             )
         )
@@ -707,7 +650,11 @@ final class MenuBarMapperModel: ObservableObject {
             return
         }
 
-        clearAppRule(bundleIdentifier: bundleIdentifier, appName: frontmostApplication?.displayName)
+        clearAppRule(
+            bundleIdentifier: bundleIdentifier,
+            appName: frontmostApplication?.displayName,
+            controllerIdentifier: selectedControllerIdentifier
+        )
     }
 
     func useSelectedProfileForDefaultApplication() {
@@ -725,11 +672,21 @@ final class MenuBarMapperModel: ObservableObject {
         appendEvent("[AppRule] Default application uses \(profile.name).")
     }
 
-    func assignAppToSelectedProfile(bundleIdentifier: String, appName: String) {
-        assignApp(bundleIdentifier: bundleIdentifier, appName: appName, toProfileID: selectedProfileID)
+    func assignAppToSelectedProfile(bundleIdentifier: String, appName: String, controllerIdentifier: String? = nil) {
+        assignApp(
+            bundleIdentifier: bundleIdentifier,
+            appName: appName,
+            controllerIdentifier: controllerIdentifier,
+            toProfileID: selectedProfileID
+        )
     }
 
-    func assignApp(bundleIdentifier: String, appName: String, toProfileID profileID: UUID) {
+    func assignApp(
+        bundleIdentifier: String,
+        appName: String,
+        controllerIdentifier: String? = nil,
+        toProfileID profileID: UUID
+    ) {
         guard profiles.contains(where: { $0.id == profileID }) else {
             return
         }
@@ -738,15 +695,29 @@ final class MenuBarMapperModel: ObservableObject {
             AppProfileRule(
                 bundleIdentifier: bundleIdentifier,
                 appName: appName,
+                controllerIdentifier: controllerIdentifier,
                 action: .useProfile(profileID)
             )
         )
     }
 
-    func profileIDForApplication(bundleIdentifier: String?) -> UUID {
+    func appRule(bundleIdentifier: String, controllerIdentifier: String?) -> AppProfileRule? {
+        if
+            let controllerIdentifier,
+            let controllerRule = appRules.first(where: {
+                $0.bundleIdentifier == bundleIdentifier && $0.controllerIdentifier == controllerIdentifier
+            })
+        {
+            return controllerRule
+        }
+
+        return appRules.first { $0.bundleIdentifier == bundleIdentifier && $0.controllerIdentifier == nil }
+    }
+
+    func profileIDForApplication(bundleIdentifier: String?, controllerIdentifier: String?) -> UUID {
         if
             let bundleIdentifier,
-            let rule = appRules.first(where: { $0.bundleIdentifier == bundleIdentifier }),
+            let rule = appRule(bundleIdentifier: bundleIdentifier, controllerIdentifier: controllerIdentifier),
             case .useProfile(let profileID) = rule.action,
             profiles.contains(where: { $0.id == profileID })
         {
@@ -756,23 +727,28 @@ final class MenuBarMapperModel: ObservableObject {
         return validDefaultSelectedProfileID()
     }
 
-    func syncSelectedProfileForApplication(bundleIdentifier: String?) {
-        syncSelectedProfile(to: profileIDForApplication(bundleIdentifier: bundleIdentifier))
+    func syncSelectedProfileForApplication(bundleIdentifier: String?, controllerIdentifier: String?) {
+        syncSelectedProfile(
+            to: profileIDForApplication(bundleIdentifier: bundleIdentifier, controllerIdentifier: controllerIdentifier)
+        )
     }
 
-    func disableOutputForApp(bundleIdentifier: String, appName: String) {
+    func disableOutputForApp(bundleIdentifier: String, appName: String, controllerIdentifier: String? = nil) {
         setRule(
             AppProfileRule(
                 bundleIdentifier: bundleIdentifier,
                 appName: appName,
+                controllerIdentifier: controllerIdentifier,
                 action: .disableOutput
             )
         )
     }
 
-    func clearAppRule(bundleIdentifier: String, appName: String? = nil) {
+    func clearAppRule(bundleIdentifier: String, appName: String? = nil, controllerIdentifier: String? = nil) {
         releasePostedKeys(reason: "app rule cleared")
-        appRules.removeAll(where: { $0.bundleIdentifier == bundleIdentifier })
+        appRules.removeAll {
+            $0.bundleIdentifier == bundleIdentifier && $0.controllerIdentifier == controllerIdentifier
+        }
         persistAppRules()
         updateStatusItemState()
         appendEvent("[AppRule] Cleared rule for \(appName ?? bundleIdentifier).")
@@ -973,7 +949,7 @@ final class MenuBarMapperModel: ObservableObject {
         let controllerName = controllerDisplayName(for: controller)
         appendEvent("[Mapping] \(controllerName) \(paddle.consoleName) \(state) -> \(action.displayName) (\(profile.name)).")
 
-        guard effectiveOutputEnabled else {
+        guard effectiveOutputEnabled(forControllerIdentifier: controller.identifier) else {
             appendEvent("[Output] Disabled; skipped \(action.displayName) \(isPressed ? "down" : "up").")
             return
         }
@@ -1152,18 +1128,9 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     private func syncSelectedProfileForSelectedController() {
-        guard let selectedControllerIdentifier else {
-            return
-        }
-
-        guard
-            let configuredProfileID = controllerConfiguration(for: selectedControllerIdentifier)?.profileID,
-            profiles.contains(where: { $0.id == configuredProfileID })
-        else {
-            return
-        }
-
-        syncSelectedProfile(to: configuredProfileID)
+        // Profile selection is app/default scoped, with app rules optionally narrowed
+        // to the selected controller. Legacy controller-wide assignments are ignored
+        // so hidden controller overrides cannot conflict with app-specific choices.
     }
 
     private func syncSelectedProfile(to profileID: UUID) {
@@ -1178,19 +1145,22 @@ final class MenuBarMapperModel: ObservableObject {
 
     private func profileForController(identifier: String) -> MappingProfile {
         if
-            let profileID = controllerConfiguration(for: identifier)?.profileID,
+            let ruleKey = frontmostApplication?.ruleKey,
+            let controllerAppRule = appRule(bundleIdentifier: ruleKey, controllerIdentifier: identifier),
+            case .useProfile(let profileID) = controllerAppRule.action,
             let profile = profiles.first(where: { $0.id == profileID })
         {
             return profile
         }
 
-        let fallbackProfileID = fallbackProfileIDForUnassignedController()
+        let fallbackProfileID = fallbackProfileIDForUnassignedController(identifier: identifier)
         return profiles.first(where: { $0.id == fallbackProfileID }) ?? selectedProfile
     }
 
-    private func fallbackProfileIDForUnassignedController() -> UUID {
+    private func fallbackProfileIDForUnassignedController(identifier: String?) -> UUID {
         if
-            let activeAppRule,
+            let ruleKey = frontmostApplication?.ruleKey,
+            let activeAppRule = appRule(bundleIdentifier: ruleKey, controllerIdentifier: identifier),
             case .useProfile(let profileID) = activeAppRule.action,
             profiles.contains(where: { $0.id == profileID })
         {
@@ -1198,6 +1168,26 @@ final class MenuBarMapperModel: ObservableObject {
         }
 
         return validDefaultSelectedProfileID()
+    }
+
+    private func effectiveOutputEnabled(forControllerIdentifier controllerIdentifier: String?) -> Bool {
+        guard outputEnabled else {
+            return false
+        }
+
+        guard
+            let ruleKey = frontmostApplication?.ruleKey,
+            let activeAppRule = appRule(bundleIdentifier: ruleKey, controllerIdentifier: controllerIdentifier)
+        else {
+            return defaultApplicationOutputEnabled
+        }
+
+        switch activeAppRule.action {
+        case .useProfile:
+            return true
+        case .disableOutput:
+            return false
+        }
     }
 
     private func validDefaultSelectedProfileID() -> UUID {
@@ -1256,9 +1246,18 @@ final class MenuBarMapperModel: ObservableObject {
 
     private func setRule(_ rule: AppProfileRule) {
         releasePostedKeys(reason: "app rule changed")
-        appRules.removeAll(where: { $0.bundleIdentifier == rule.bundleIdentifier })
+        appRules.removeAll {
+            $0.bundleIdentifier == rule.bundleIdentifier && $0.controllerIdentifier == rule.controllerIdentifier
+        }
         appRules.append(rule)
-        appRules.sort { $0.appName.localizedCaseInsensitiveCompare($1.appName) == .orderedAscending }
+        appRules.sort {
+            let appOrder = $0.appName.localizedCaseInsensitiveCompare($1.appName)
+            if appOrder != .orderedSame {
+                return appOrder == .orderedAscending
+            }
+
+            return ($0.controllerIdentifier ?? "") < ($1.controllerIdentifier ?? "")
+        }
         persistAppRules()
         updateStatusItemState()
         appendEvent("[AppRule] \(rule.appName): \(rule.action.displayName(profileNameForID: profileName(for:))).")
@@ -1500,22 +1499,6 @@ final class MenuBarMapperModel: ObservableObject {
     private static func defaultSelectedControllerIdentifier(from configurations: [ControllerConfiguration]) -> String? {
         configurations.first(where: \.isPrimary)?.identifier ??
             configurations.first(where: \.isPinned)?.identifier
-    }
-
-    private static func controllerProfileID(
-        for controllerIdentifier: String?,
-        in configurations: [ControllerConfiguration],
-        profiles: [MappingProfile]
-    ) -> UUID? {
-        guard
-            let controllerIdentifier,
-            let profileID = configurations.first(where: { $0.identifier == controllerIdentifier })?.profileID,
-            profiles.contains(where: { $0.id == profileID })
-        else {
-            return nil
-        }
-
-        return profileID
     }
 
     private static func mappingDefaultsKey(for paddle: Paddle) -> String {

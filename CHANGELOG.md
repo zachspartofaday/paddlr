@@ -7,7 +7,7 @@ All notable public-facing changes to Paddlr will be documented in this file.
 ### Added
 
 - Added the Paddlr Swift package and menu bar app for mapping Xbox Elite Series 2 paddles to keyboard output on macOS.
-- Added configurable paddle mappings, named profiles, per-app rules, controller selection, and controller-specific profile assignment.
+- Added configurable paddle mappings, named profiles, controller selection, app pinning, and per-app rules that can be scoped to the selected controller.
 - Added diagnostic command-line tools for controller and HID investigation.
 - Added a no-dependency self-test with `swift run PaddlrSelfTest`.
 

@@ -4,19 +4,22 @@ import Foundation
 public struct AppProfileRule: Codable, Equatable, Identifiable, Sendable {
     public var bundleIdentifier: String
     public var appName: String
+    public var controllerIdentifier: String?
     public var action: AppProfileRuleAction
 
     public var id: String {
-        bundleIdentifier
+        [bundleIdentifier, controllerIdentifier].compactMap { $0 }.joined(separator: "::")
     }
 
     public init(
         bundleIdentifier: String,
         appName: String,
+        controllerIdentifier: String? = nil,
         action: AppProfileRuleAction
     ) {
         self.bundleIdentifier = bundleIdentifier
         self.appName = appName
+        self.controllerIdentifier = controllerIdentifier
         self.action = action
     }
 }

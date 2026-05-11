@@ -204,6 +204,18 @@ do {
     guard decodedRule == rule else {
         fail("app profile rule did not round-trip through Codable")
     }
+
+    let controllerRule = AppProfileRule(
+        bundleIdentifier: "com.example.Game",
+        appName: "Example Game",
+        controllerIdentifier: controllerInfo.identifier,
+        action: .useProfile(migratedProfile.id)
+    )
+    let controllerRuleData = try encoder.encode(controllerRule)
+    let decodedControllerRule = try decoder.decode(AppProfileRule.self, from: controllerRuleData)
+    guard decodedControllerRule == controllerRule else {
+        fail("controller-specific app profile rule did not round-trip through Codable")
+    }
 } catch {
     fail("Codable validation failed: \(error.localizedDescription)")
 }
