@@ -131,7 +131,7 @@ struct MappingPanelView: View {
                     .fontWeight(.semibold)
                 controllerStatusRow
                 accessibilityStatusRow
-                inputMonitoringStatusRow
+                controllerInputAccessStatusRow
             }
 
             Spacer()
@@ -765,7 +765,7 @@ struct MappingPanelView: View {
 
     private var controllerStatusText: String {
         if !model.inputMonitoringTrusted {
-            return "Controller input: Permission Needed"
+            return "Controller Input Access: Permission Needed"
         }
 
         if model.paddleDeviceStatus.isConnected {
@@ -820,14 +820,14 @@ struct MappingPanelView: View {
         }
     }
 
-    private var inputMonitoringStatusRow: some View {
+    private var controllerInputAccessStatusRow: some View {
         permissionStatusRow(
             isTrusted: model.inputMonitoringTrusted,
-            trustedText: "Input Monitoring: Trusted",
-            neededText: "Input Monitoring: Permission Needed",
-            buttonTitle: "Grant Input Monitoring Permission",
+            trustedText: "Controller Input Access: Ready",
+            neededText: "Controller Input Access: Permission Needed",
+            buttonTitle: "Grant Controller Input Access",
             systemImage: "keyboard",
-            helpText: "Open the macOS Input Monitoring permission prompt for controller input",
+            helpText: "Open the macOS permission prompt for raw controller input",
             detailText: "Required before Paddlr starts controller detection."
         ) {
             model.refreshInputMonitoringTrust(prompt: true)

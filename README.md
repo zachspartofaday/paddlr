@@ -56,23 +56,25 @@ If you trust the release source, this first-launch flow is expected:
 
 ### 2. Grant macOS permissions
 
-Paddlr may need two separate macOS permissions:
+Paddlr may need two macOS permission capabilities:
 
 - **Accessibility** for keyboard output.
-- **Input Monitoring** for reading raw controller/HID input on some Macs, macOS versions, or connection paths.
+- **Controller Input Access** for reading raw controller/HID input.
 
 ```text
 System Settings -> Privacy & Security -> Accessibility
 System Settings -> Privacy & Security -> Input Monitoring
 ```
 
-If you launch `Paddlr.app`, grant permissions to Paddlr itself. If you run with `swift run`, grant permissions to Terminal or the `swift` host. Gatekeeper approval, Accessibility permission, and Input Monitoring permission are separate steps.
+If you launch `Paddlr.app`, grant permissions to Paddlr itself. If you run with `swift run`, grant permissions to Terminal or the `swift` host. Gatekeeper approval and runtime permissions are separate steps.
 
 Move `Paddlr.app` to its final location, such as Applications, before granting permissions. If you grant permission first and then move the app, it should usually keep working, but macOS may ask again.
 
 When the menu bar panel says **Accessibility: Permission Needed**, click **Grant Accessibility Permission** in Paddlr, then approve Paddlr in System Settings. Keyboard output will not work until Accessibility permission is granted.
 
-When the menu bar panel says **Input Monitoring: Permission Needed**, click **Grant Input Monitoring Permission** in Paddlr, then approve Paddlr in System Settings. Paddlr waits to start controller detection until this permission is granted, so paddle input will not be detected before this step.
+When the menu bar panel says **Controller Input Access: Permission Needed**, click **Grant Controller Input Access** in Paddlr, then approve Paddlr if macOS opens a permission prompt or System Settings. Paddlr waits to start controller detection until controller input access is ready, so paddle input will not be detected before this step.
+
+On some Macs, granting Accessibility also satisfies Paddlr's controller input access check. In that case the panel may show **Controller Input Access: Ready** even if Paddlr does not appear in the Input Monitoring allow list.
 
 When updating from an earlier preview build, macOS may ask for permissions again. If Paddlr still appears untrusted after an update or move, remove the old Paddlr entry from Accessibility/Input Monitoring, add the current `Paddlr.app` from its final location, and enable it.
 
@@ -94,7 +96,7 @@ Open the menu bar panel to configure controller, application, profile, and paddl
    - The controller row is green when an Elite paddle device is connected, orange when a controller is detected without usable Elite paddle input, and red when no Elite device is found.
    - Use the retry button next to the controller row if detection needs to be refreshed.
    - The Accessibility row is green when macOS trusts the launcher for keyboard output. If it says **Accessibility: Permission Needed**, click **Grant Accessibility Permission** or grant permission in System Settings.
-   - The Input Monitoring row is green when macOS trusts Paddlr for raw controller input. If it says **Input Monitoring: Permission Needed**, click **Grant Input Monitoring Permission** or grant permission in System Settings. Paddlr will not start controller detection until this permission is granted.
+   - The Controller Input Access row is green when macOS lets Paddlr read raw controller input. If it says **Controller Input Access: Permission Needed**, click **Grant Controller Input Access** or grant permission in System Settings. Paddlr will not start controller detection until this access is ready.
 2. **Use the Keyboard output switch** in the top-right to turn all paddle output on or off without changing mappings.
 3. **Choose a controller** in the Controller section when more than one controller is visible.
    - Use the pencil button to give a controller a friendly name.

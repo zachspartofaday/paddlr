@@ -272,7 +272,7 @@ public final class HIDPaddleMonitor {
         } else {
             updateDeviceStatus(HIDPaddleDeviceStatus(isConnected: false, deviceName: nil), notifyWhenUnchanged: true)
             log("Raw IOHID paddle monitor unavailable: IOHIDManagerOpen returned \(openStatus).")
-            log("If needed, grant Paddlr Input Monitoring permission and try again.")
+            log("If needed, grant Paddlr controller input access and try again.")
             IOHIDManagerUnscheduleFromRunLoop(
                 manager,
                 CFRunLoopGetMain(),

@@ -6,6 +6,13 @@ All notable public-facing changes to Paddlr will be documented in this file.
 
 - No unreleased public-facing changes yet.
 
+## 0.1.5 - 2026-05-11
+
+### Changed
+
+- Renamed the user-facing Input Monitoring row and button to **Controller Input Access** to reflect that macOS may satisfy raw controller input access through Accessibility or Input Monitoring.
+- Documented that **Controller Input Access: Ready** can appear even when Paddlr is not listed separately under Input Monitoring.
+
 ## 0.1.4 - 2026-05-11
 
 ### Changed

@@ -378,7 +378,7 @@ final class MenuBarMapperModel: ObservableObject {
         appendEvent("[Output] Keyboard output \(outputEnabled ? "enabled" : "disabled").")
         appendEvent("[Output] Default application output \(defaultApplicationOutputEnabled ? "enabled" : "disabled").")
         appendEvent("[Accessibility] Permission is \(accessibilityTrusted ? "trusted" : "not trusted").")
-        appendEvent("[InputMonitoring] Permission is \(inputMonitoringTrusted ? "trusted" : "not trusted").")
+        appendEvent("[ControllerInputAccess] Permission is \(inputMonitoringTrusted ? "ready" : "not ready").")
         updateStatusItemState()
         startFrontmostAppMonitor()
         startMonitor()
@@ -612,13 +612,13 @@ final class MenuBarMapperModel: ObservableObject {
 
     func refreshInputMonitoringTrust(prompt: Bool) {
         inputMonitoringTrusted = HIDPaddleMonitor.isInputMonitoringTrusted(prompt: prompt)
-        appendEvent("[InputMonitoring] Permission is \(inputMonitoringTrusted ? "trusted" : "not trusted").")
+        appendEvent("[ControllerInputAccess] Permission is \(inputMonitoringTrusted ? "ready" : "not ready").")
 
         if inputMonitoringTrusted {
             startMonitor()
         } else if prompt {
-            monitorStatus = "Input Monitoring permission needed."
-            appendEvent("[InputMonitoring] Approve Paddlr in System Settings, then click the button again if needed.")
+            monitorStatus = "Controller input access needed."
+            appendEvent("[ControllerInputAccess] Approve Paddlr in System Settings, then click the button again if needed.")
         }
     }
 
@@ -812,8 +812,8 @@ final class MenuBarMapperModel: ObservableObject {
             monitor = nil
             clearPressedPaddles()
             paddleDeviceStatus = HIDPaddleDeviceStatus(isConnected: false, deviceName: nil)
-            monitorStatus = "Input Monitoring permission needed."
-            appendEvent("[IOHID] Waiting for Input Monitoring permission before starting controller detection.")
+            monitorStatus = "Controller input access needed."
+            appendEvent("[IOHID] Waiting for controller input access before starting controller detection.")
             updateStatusItemState()
             return
         }
