@@ -658,18 +658,27 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     func useSelectedProfileForDefaultApplication() {
-        useProfileForDefaultApplication(profileID: selectedProfileID)
+        useProfileForDefaultApplication(profileID: selectedProfileID, controllerIdentifier: selectedControllerIdentifier)
     }
 
-    func useProfileForDefaultApplication(profileID: UUID) {
+    func useProfileForDefaultApplication(profileID: UUID, controllerIdentifier: String? = nil) {
         guard let profile = profiles.first(where: { $0.id == profileID }) else {
             return
         }
 
-        releasePostedKeys(reason: "default application profile saved")
-        defaultSelectedProfileID = profileID
-        defaults.set(profileID.uuidString, forKey: Self.selectedProfileIDDefaultsKey)
-        appendEvent("[AppRule] Default application uses \(profile.name).")
+        if let controllerIdentifier {
+            let fallbackName = connectedControllerSelections.first(where: { $0.identifier == controllerIdentifier })?.productName ?? controllerIdentifier
+            releasePostedKeys(for: [controllerIdentifier], reason: "controller default profile saved")
+            updateControllerConfiguration(identifier: controllerIdentifier) { configuration in
+                configuration.profileID = profileID
+            }
+            appendEvent("[AppRule] Default for \(controllerDisplayName(for: controllerIdentifier, fallback: fallbackName)) uses \(profile.name).")
+        } else {
+            releasePostedKeys(reason: "default application profile saved")
+            defaultSelectedProfileID = profileID
+            defaults.set(profileID.uuidString, forKey: Self.selectedProfileIDDefaultsKey)
+            appendEvent("[AppRule] Default application uses \(profile.name).")
+        }
     }
 
     func assignAppToSelectedProfile(bundleIdentifier: String, appName: String, controllerIdentifier: String? = nil) {
@@ -719,6 +728,14 @@ final class MenuBarMapperModel: ObservableObject {
             let bundleIdentifier,
             let rule = appRule(bundleIdentifier: bundleIdentifier, controllerIdentifier: controllerIdentifier),
             case .useProfile(let profileID) = rule.action,
+            profiles.contains(where: { $0.id == profileID })
+        {
+            return profileID
+        }
+
+        if
+            let controllerIdentifier,
+            let profileID = controllerConfiguration(for: controllerIdentifier)?.profileID,
             profiles.contains(where: { $0.id == profileID })
         {
             return profileID
@@ -1162,6 +1179,14 @@ final class MenuBarMapperModel: ObservableObject {
             let ruleKey = frontmostApplication?.ruleKey,
             let activeAppRule = appRule(bundleIdentifier: ruleKey, controllerIdentifier: identifier),
             case .useProfile(let profileID) = activeAppRule.action,
+            profiles.contains(where: { $0.id == profileID })
+        {
+            return profileID
+        }
+
+        if
+            let identifier,
+            let profileID = controllerConfiguration(for: identifier)?.profileID,
             profiles.contains(where: { $0.id == profileID })
         {
             return profileID

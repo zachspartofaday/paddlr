@@ -86,7 +86,7 @@ Open the menu bar panel to configure controller, application, profile, and paddl
    - Use **+** to add and pin another `.app` bundle manually; it will show the same **x** control until unpinned.
    - Toggle **Enable for this app** off to disable paddle output only for the selected app.
 5. **Choose or create a profile** in the Profile section.
-   - Selecting a profile saves it immediately for the selected app and selected controller. If **Default** is selected in the Application section, the profile becomes the default app mapping.
+   - Selecting a profile saves it immediately for the selected app and selected controller. If **Default** is selected in the Application section, the profile becomes that controller's default mapping; with no controller selected, it becomes the global default mapping.
    - Use **+** to create a profile, the pencil to rename it, and **x** to delete a non-default profile.
    - Use the reset button on the default profile to restore P1-P4 to F13-F16.
 6. **Edit paddle mappings** in the Mappings section.

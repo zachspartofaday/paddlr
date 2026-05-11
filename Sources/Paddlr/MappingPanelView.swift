@@ -27,7 +27,7 @@ private struct AppSelection: Identifiable, Hashable {
 }
 
 private enum ProfileAssignmentTarget: Equatable {
-    case defaultApplication
+    case defaultApplication(controllerIdentifier: String?)
     case application(bundleIdentifier: String, appName: String, controllerIdentifier: String?)
 }
 
@@ -279,7 +279,8 @@ struct MappingPanelView: View {
             return diagnosticProfileDetailText
         }
 
-        guard model.effectiveProfile.id != model.selectedProfileID else {
+        guard selectedApp?.isDefault != true,
+              model.effectiveProfile.id != model.selectedProfileID else {
             return nil
         }
 
@@ -499,7 +500,7 @@ struct MappingPanelView: View {
         }
 
         if selectedApp.isDefault {
-            return .defaultApplication
+            return .defaultApplication(controllerIdentifier: model.selectedControllerIdentifier)
         }
 
         return .application(
@@ -515,8 +516,8 @@ struct MappingPanelView: View {
         }
 
         switch target {
-        case .defaultApplication:
-            model.useProfileForDefaultApplication(profileID: profileID)
+        case .defaultApplication(let controllerIdentifier):
+            model.useProfileForDefaultApplication(profileID: profileID, controllerIdentifier: controllerIdentifier)
         case .application(let bundleIdentifier, let appName, let controllerIdentifier):
             model.assignApp(
                 bundleIdentifier: bundleIdentifier,
