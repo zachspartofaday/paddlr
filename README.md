@@ -6,15 +6,9 @@ macOS already includes native controller profiles for rebinding the standard Xbo
 
 It is currently focused on safe keyboard output: each paddle can send a configurable key such as F13-F16, arrows, letters, numbers, or modifiers.
 
-## Screenshots
+## Screenshot
 
-> Screenshots will be added before the public release.
-
-![Paddlr menu bar placeholder](assets/screenshots/paddlr-menu-bar-placeholder.svg)
-
-![Paddlr mapping editor placeholder](assets/screenshots/paddlr-mapping-editor-placeholder.svg)
-
-![Paddlr controller profile placeholder](assets/screenshots/paddlr-controller-profile-placeholder.svg)
+![Paddlr menu bar panel](assets/screenshots/paddlr-menu-bar-panel.png)
 
 ## Current status
 
