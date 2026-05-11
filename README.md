@@ -64,7 +64,11 @@ System Settings -> Privacy & Security -> Accessibility
 
 If you launch `Paddlr.app`, grant Accessibility permission to Paddlr itself. If you run with `swift run`, grant Accessibility permission to Terminal or the `swift` host. Gatekeeper approval and Accessibility permission are separate steps.
 
+Move `Paddlr.app` to its final location, such as Applications, before granting Accessibility permission. If you grant permission first and then move the app, it should usually keep working, but macOS may ask again.
+
 When the menu bar panel says **Accessibility: Permission Needed**, click **Grant Accessibility Permission** in Paddlr, then approve Paddlr in System Settings. Keyboard output will not work until Accessibility permission is granted.
+
+When updating from an earlier preview build, macOS may ask for Accessibility permission again. If Paddlr still appears untrusted after an update or move, remove the old Paddlr entry from Accessibility, add the current `Paddlr.app` from its final location, and enable it.
 
 ### 3. Set the controller to Profile 0
 

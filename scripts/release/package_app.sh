@@ -10,7 +10,7 @@ The app bundle is locally signed so macOS can validate its bundle resources.
 
 Options:
   --output-dir <path>        Directory for release artifacts (default: dist)
-  --version <version>        CFBundleShortVersionString (default: latest v* tag or 0.1.1)
+  --version <version>        CFBundleShortVersionString (default: latest v* tag or 0.1.2)
   --build-number <number>    CFBundleVersion (default: UTC timestamp)
   --bundle-id <id>           CFBundleIdentifier (default: com.zachskjaveland.paddlr)
   --minimum-macos <version>  LSMinimumSystemVersion (default: 15.0)
@@ -47,7 +47,7 @@ latest_tag_version() {
   if [[ -n "$tag" ]]; then
     printf '%s\n' "${tag#v}"
   else
-    printf '0.1.1\n'
+    printf '0.1.2\n'
   fi
 }
 
@@ -195,7 +195,11 @@ plutil -lint "$info_plist" >/dev/null
 xattr -cr "$app_path" 2>/dev/null || true
 
 if [[ "$sign_bundle" == true ]]; then
-  codesign --force --sign - "$app_path"
+  codesign \
+    --force \
+    --sign - \
+    --requirements "=designated => identifier \"$bundle_id\"" \
+    "$app_path"
   codesign --verify --strict --verbose=2 "$app_path"
 fi
 

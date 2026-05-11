@@ -4,10 +4,16 @@ All notable public-facing changes to Paddlr will be documented in this file.
 
 ## Unreleased
 
+- No unreleased public-facing changes yet.
+
+## 0.1.2 - 2026-05-11
+
 ### Changed
 
 - Reorganized the README around a Quick start flow before detailed UI/reference sections.
 - Split the Gatekeeper first-launch and **Open Anyway** confirmation screenshots into separate README steps.
+- Updated local bundle signing to use a stable bundle-identifier requirement for future preview updates.
+- Documented that users should move `Paddlr.app` to its final location before granting Accessibility permission, and that earlier preview updates may require granting permission again.
 
 ## 0.1.1 - 2026-05-11
 
