@@ -351,15 +351,41 @@ struct MappingPanelView: View {
     private var appSelections: [AppSelection] {
         var selections: [AppSelection] = [.appDefault]
 
-        if let app = model.frontmostApplication, let bundleIdentifier = app.ruleKey {
-            selections.append(AppSelection(bundleIdentifier: bundleIdentifier, appName: app.displayName))
+        for app in model.observedApplications {
+            appendAppSelection(from: app, to: &selections)
         }
 
-        for rule in model.appRules where !selections.contains(where: { $0.bundleIdentifier == rule.bundleIdentifier }) {
-            selections.append(AppSelection(bundleIdentifier: rule.bundleIdentifier, appName: rule.appName))
+        if let app = model.frontmostApplication {
+            appendAppSelection(from: app, to: &selections)
+        }
+
+        for rule in model.appRules {
+            appendAppSelection(
+                AppSelection(bundleIdentifier: rule.bundleIdentifier, appName: rule.appName),
+                to: &selections
+            )
         }
 
         return selections
+    }
+
+    private func appendAppSelection(from app: FrontmostApplicationInfo, to selections: inout [AppSelection]) {
+        guard let bundleIdentifier = app.ruleKey else {
+            return
+        }
+
+        appendAppSelection(
+            AppSelection(bundleIdentifier: bundleIdentifier, appName: app.displayName),
+            to: &selections
+        )
+    }
+
+    private func appendAppSelection(_ selection: AppSelection, to selections: inout [AppSelection]) {
+        guard !selections.contains(where: { $0.bundleIdentifier == selection.bundleIdentifier }) else {
+            return
+        }
+
+        selections.append(selection)
     }
 
     private var selectedApp: AppSelection? {

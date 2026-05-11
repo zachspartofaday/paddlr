@@ -136,6 +136,7 @@ final class MenuBarMapperModel: ObservableObject {
     @Published private(set) var controllerConfigurations: [ControllerConfiguration]
     @Published private(set) var selectedControllerIdentifier: String?
     @Published private(set) var frontmostApplication: FrontmostApplicationInfo?
+    @Published private(set) var observedApplications: [FrontmostApplicationInfo] = []
     @Published private(set) var capturingPaddle: Paddle?
     @Published private(set) var paddleDeviceStatus = HIDPaddleDeviceStatus(isConnected: false, deviceName: nil)
     @Published private(set) var monitorStatus = "Starting raw IOHID monitor..."
@@ -163,6 +164,7 @@ final class MenuBarMapperModel: ObservableObject {
     private static let controllerConfigurationsDefaultsKey = "com.paddlr.phase5.controllerConfigurations.v1"
     private static let legacyControllerConfigurationsDefaultsKey = "com.elitemapper.phase5.controllerConfigurations.v1"
     private static let maxRecentEvents = 40
+    private static let maxObservedApplications = 20
     private static let deviceStatusPollInterval: TimeInterval = 3
     private static let debugConsoleLoggingEnabled = MenuBarMapperModel.isEnvironmentFlagEnabled(
         "PADDLR_DEBUG_LOG",
@@ -810,12 +812,26 @@ final class MenuBarMapperModel: ObservableObject {
 
         releasePostedKeys(reason: "frontmost app changed")
         frontmostApplication = info
+        rememberObservedApplication(info)
         syncSelectedProfileForSelectedController()
         updateStatusItemState()
         appendEvent("[App] Active app: \(info.displayName).")
 
         if let activeAppRule {
             appendEvent("[AppRule] Applied \(activeAppRule.action.displayName(profileNameForID: profileName(for:))).")
+        }
+    }
+
+    private func rememberObservedApplication(_ info: FrontmostApplicationInfo) {
+        guard info.ruleKey != nil else {
+            return
+        }
+
+        observedApplications.removeAll { $0.ruleKey == info.ruleKey }
+        observedApplications.insert(info, at: 0)
+
+        if observedApplications.count > Self.maxObservedApplications {
+            observedApplications.removeLast(observedApplications.count - Self.maxObservedApplications)
         }
     }
 

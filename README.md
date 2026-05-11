@@ -81,6 +81,7 @@ Open the menu bar panel to configure controller, application, profile, and paddl
 4. **Choose the application scope** in the Application section.
    - **Default** applies when there is no app-specific rule.
    - The current frontmost app appears automatically when Paddlr can identify it.
+   - Recently detected apps stay in the list for the current Paddlr run; apps with saved rules remain available after relaunch.
    - Use **+** to add another `.app` bundle manually.
    - Toggle **Enable for this app** off to disable paddle output only for the selected app.
 5. **Choose or create a profile** in the Profile section.
