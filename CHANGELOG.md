@@ -4,7 +4,9 @@ All notable public-facing changes to Paddlr will be documented in this file.
 
 ## Unreleased
 
-- No unreleased public-facing changes yet.
+### Changed
+
+- Reorganized the README around a Quick start flow before detailed UI/reference sections.
 
 ## 0.1.1 - 2026-05-11
 

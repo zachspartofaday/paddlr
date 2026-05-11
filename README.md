@@ -27,20 +27,48 @@ It is currently focused on safe keyboard output: each paddle can send a configur
   - Paddle 3 -> F15
   - Paddle 4 -> F16
 
-## Menu bar icon states
+## Quick start
 
-Paddlr combines output state and controller status in one menu bar icon:
+### 1. Download and open Paddlr
 
-![Paddlr menu bar icon state examples](assets/screenshots/paddlr-menu-bar-states.png)
+Download the latest `Paddlr-<version>.zip` from [Releases](https://github.com/zachspartofaday/paddlr/releases). It contains `Paddlr.app` for users who do not want to build from source.
 
-The examples above are enlarged captures. The actual icon is rendered by macOS from SF Symbols, and the accent color follows your system setting.
+The app bundle is locally signed so macOS can validate its contents, but it is not Apple-notarized. macOS will likely show a warning such as “Paddlr.app can’t be opened because Apple cannot check it for malicious software” or may offer to move it to Trash.
 
-- **Filled** means paddle keyboard output is enabled for the current app.
-- **Outlined** means output is disabled for the current app.
-- **Accent color** means a supported Elite paddle controller is connected.
-- **Red** means Paddlr does not currently see a supported paddle controller.
+If you trust the release source, this first-launch flow is expected:
 
-Click the icon to open or close the mapping panel. Right-click or Control-click it to show **Quit Paddlr**.
+<p align="center">
+  <img src="assets/screenshots/paddlr-gatekeeper-warning.png" alt="macOS Gatekeeper warning for Paddlr" width="320" />
+</p>
+
+1. Unzip the archive and move `Paddlr.app` to Applications if desired.
+2. Try opening `Paddlr.app`.
+3. If macOS shows the warning above, click **Done** first. Do not choose **Move to Trash**.
+4. Open **System Settings -> Privacy & Security**, scroll to **Security**, and click **Open Anyway** for Paddlr.
+5. Confirm **Open** when macOS asks again.
+6. You can also try right-click/control-click -> **Open** on `Paddlr.app`, but the Privacy & Security **Open Anyway** path is usually required for this preview build.
+
+### 2. Grant Accessibility permission
+
+Paddlr uses CoreGraphics keyboard events for output. macOS requires Accessibility permission for the app or host that launches it:
+
+```text
+System Settings -> Privacy & Security -> Accessibility
+```
+
+If you launch `Paddlr.app`, grant Accessibility permission to Paddlr itself. If you run with `swift run`, grant Accessibility permission to Terminal or the `swift` host. Gatekeeper approval and Accessibility permission are separate steps.
+
+When the menu bar panel says **Accessibility: Permission Needed**, click **Grant Accessibility Permission** in Paddlr, then approve Paddlr in System Settings. Keyboard output will not work until Accessibility permission is granted.
+
+### 3. Set the controller to Profile 0
+
+For distinct paddle input, set the Xbox Elite Series 2 controller to **Profile 0** before using Paddlr. Profile 0 is the default/no-profile-LED mode.
+
+Profiles 1-3 can also emit the controller's firmware-mapped buttons, which may cause games to see both the native controller input and Paddlr's keyboard output.
+
+### 4. Configure mappings
+
+After Paddlr launches, it appears as an icon in the macOS menu bar. Click the icon to open the mapping panel, then choose your controller, application scope, profile, and paddle mappings.
 
 ## Configuring Paddlr from the menu bar UI
 
@@ -71,23 +99,22 @@ Open the menu bar panel to configure controller, application, profile, and paddl
    - Changed paddle tiles are highlighted until you click **Save** for the selected app/default/controller target.
 7. **Use Recent events** for troubleshooting. Click **Show** to see connection, permission, app-rule, and paddle-event messages.
 
-## Controller setup
+## Menu bar icon states
 
-For distinct paddle input, set the Xbox Elite Series 2 controller to **Profile 0** before using Paddlr. Profile 0 is the default/no-profile-LED mode. Profiles 1-3 can also emit the controller's firmware-mapped buttons, which may cause games to see both the native controller input and Paddlr's keyboard output.
+Paddlr combines output state and controller status in one menu bar icon:
 
-## Permissions
+![Paddlr menu bar icon state examples](assets/screenshots/paddlr-menu-bar-states.png)
 
-Paddlr uses CoreGraphics keyboard events for output. macOS requires Accessibility permission for the app or host that launches it:
+The examples above are enlarged captures. The actual icon is rendered by macOS from SF Symbols, and the accent color follows your system setting.
 
-```text
-System Settings -> Privacy & Security -> Accessibility
-```
+- **Filled** means paddle keyboard output is enabled for the current app.
+- **Outlined** means output is disabled for the current app.
+- **Accent color** means a supported Elite paddle controller is connected.
+- **Red** means Paddlr does not currently see a supported paddle controller.
 
-If you run with `swift run`, grant Accessibility permission to Terminal or the `swift` host. If you launch `Paddlr.app`, grant Accessibility permission to Paddlr itself. Gatekeeper approval and Accessibility permission are separate steps.
+Click the icon to open or close the mapping panel. Right-click or Control-click it to show **Quit Paddlr**.
 
-When the menu bar panel says **Accessibility: Permission Needed**, click **Grant Accessibility Permission** in Paddlr, then approve Paddlr in System Settings. Keyboard output will not work until Accessibility permission is granted.
-
-## Build and run from source
+## Build and package from source
 
 Build and run the self-test:
 
@@ -102,37 +129,14 @@ Run the menu bar app directly from SwiftPM:
 swift run Paddlr
 ```
 
-The app appears as an icon in the macOS menu bar. Click the icon to open the mapping panel.
-
-## Download the convenience app
-
-Paddlr releases include a `.zip` archive containing `Paddlr.app` for users who do not want to build from source.
-
-The app bundle is locally signed so macOS can validate its contents, but it is not Apple-notarized. macOS will likely show a warning such as “Paddlr.app can’t be opened because Apple cannot check it for malicious software” or may offer to move it to Trash.
-
-If you trust the release source, this first-launch flow is expected:
-
-<p align="center">
-  <img src="assets/screenshots/paddlr-gatekeeper-warning.png" alt="macOS Gatekeeper warning for Paddlr" width="320" />
-</p>
-
-1. Unzip the archive and move `Paddlr.app` to Applications if desired.
-2. Try opening `Paddlr.app`.
-3. If macOS shows the warning above, click **Done** first. Do not choose **Move to Trash**.
-4. Open **System Settings -> Privacy & Security**, scroll to **Security**, and click **Open Anyway** for Paddlr.
-5. Confirm **Open** when macOS asks again.
-6. You can also try right-click/control-click -> **Open** on `Paddlr.app`, but the Privacy & Security **Open Anyway** path is usually required for this preview build.
-
-## Package as a macOS app from source
-
-If you build from source, you can create the same convenience app bundle locally:
+Create the same convenience app bundle locally:
 
 ```bash
 scripts/release/package_app.sh --clean --create-zip
 open dist/Paddlr.app
 ```
 
-The script creates `dist/Paddlr.app` and, when requested, a zipped release archive. It embeds the Paddlr app icon, applies local bundle signing for macOS validation, and never changes repository visibility.
+The packaging script creates `dist/Paddlr.app` and, when requested, a zipped release archive. It embeds the Paddlr app icon, applies local bundle signing for macOS validation, and never changes repository visibility.
 
 ## Diagnostics
 
