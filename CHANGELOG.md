@@ -6,6 +6,13 @@ All notable public-facing changes to Paddlr will be documented in this file.
 
 - No unreleased public-facing changes yet.
 
+## 0.1.3 - 2026-05-11
+
+### Changed
+
+- Added an Input Monitoring permission status row and prompt button for Macs/connection paths that require it for raw controller input.
+- Documented that Paddlr may need both Accessibility and Input Monitoring permissions.
+
 ## 0.1.2 - 2026-05-11
 
 ### Changed

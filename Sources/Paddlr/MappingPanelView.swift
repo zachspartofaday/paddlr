@@ -131,6 +131,7 @@ struct MappingPanelView: View {
                     .fontWeight(.semibold)
                 controllerStatusRow
                 accessibilityStatusRow
+                inputMonitoringStatusRow
             }
 
             Spacer()
@@ -798,28 +799,63 @@ struct MappingPanelView: View {
     }
 
     private var accessibilityStatusRow: some View {
+        permissionStatusRow(
+            isTrusted: model.accessibilityTrusted,
+            trustedText: "Accessibility: Trusted",
+            neededText: "Accessibility: Permission Needed",
+            buttonTitle: "Grant Accessibility Permission",
+            systemImage: "hand.raised.fill",
+            helpText: "Open the macOS Accessibility permission prompt for Paddlr keyboard output",
+            detailText: "Required for paddle keyboard output."
+        ) {
+            model.refreshAccessibilityTrust(prompt: true)
+        }
+    }
+
+    private var inputMonitoringStatusRow: some View {
+        permissionStatusRow(
+            isTrusted: model.inputMonitoringTrusted,
+            trustedText: "Input Monitoring: Trusted",
+            neededText: "Input Monitoring: Permission Needed",
+            buttonTitle: "Grant Input Monitoring Permission",
+            systemImage: "keyboard",
+            helpText: "Open the macOS Input Monitoring permission prompt for controller input",
+            detailText: "May be required for Elite paddle input."
+        ) {
+            model.refreshInputMonitoringTrust(prompt: true)
+        }
+    }
+
+    private func permissionStatusRow(
+        isTrusted: Bool,
+        trustedText: String,
+        neededText: String,
+        buttonTitle: String,
+        systemImage: String,
+        helpText: String,
+        detailText: String,
+        action: @escaping () -> Void
+    ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Circle()
-                    .fill(model.accessibilityTrusted ? Color.green : Color.red)
+                    .fill(isTrusted ? Color.green : Color.red)
                     .frame(width: 9, height: 9)
-                Text(model.accessibilityTrusted ? "Accessibility: Trusted" : "Accessibility: Permission Needed")
+                Text(isTrusted ? trustedText : neededText)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
 
-            if !model.accessibilityTrusted {
-                Button {
-                    model.refreshAccessibilityTrust(prompt: true)
-                } label: {
-                    Label("Grant Accessibility Permission", systemImage: "hand.raised.fill")
+            if !isTrusted {
+                Button(action: action) {
+                    Label(buttonTitle, systemImage: systemImage)
                 }
                 .font(.caption.weight(.semibold))
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
-                .help("Open the macOS Accessibility permission prompt for Paddlr keyboard output")
+                .help(helpText)
 
-                Text("Required for paddle keyboard output.")
+                Text(detailText)
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }

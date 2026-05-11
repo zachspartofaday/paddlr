@@ -140,6 +140,7 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     @Published private(set) var accessibilityTrusted: Bool
+    @Published private(set) var inputMonitoringTrusted: Bool
     @Published private(set) var profiles: [MappingProfile]
     @Published private(set) var appRules: [AppProfileRule]
     @Published private(set) var pinnedApplications: [MenuBarPinnedApplication]
@@ -362,6 +363,7 @@ final class MenuBarMapperModel: ObservableObject {
             legacyKey: Self.legacyDefaultApplicationOutputEnabledDefaultsKey
         ) ?? true
         self.accessibilityTrusted = KeyboardOutputSynthesizer.isAccessibilityTrusted(prompt: false)
+        self.inputMonitoringTrusted = HIDPaddleMonitor.isInputMonitoringTrusted(prompt: false)
 
         defaults.set(outputEnabled, forKey: Self.outputEnabledDefaultsKey)
         defaults.set(defaultApplicationOutputEnabled, forKey: Self.defaultApplicationOutputEnabledDefaultsKey)
@@ -376,6 +378,7 @@ final class MenuBarMapperModel: ObservableObject {
         appendEvent("[Output] Keyboard output \(outputEnabled ? "enabled" : "disabled").")
         appendEvent("[Output] Default application output \(defaultApplicationOutputEnabled ? "enabled" : "disabled").")
         appendEvent("[Accessibility] Permission is \(accessibilityTrusted ? "trusted" : "not trusted").")
+        appendEvent("[InputMonitoring] Permission is \(inputMonitoringTrusted ? "trusted" : "not trusted").")
         updateStatusItemState()
         startFrontmostAppMonitor()
         startMonitor()
@@ -605,6 +608,11 @@ final class MenuBarMapperModel: ObservableObject {
     func refreshAccessibilityTrust(prompt: Bool) {
         accessibilityTrusted = KeyboardOutputSynthesizer.isAccessibilityTrusted(prompt: prompt)
         appendEvent("[Accessibility] Permission is \(accessibilityTrusted ? "trusted" : "not trusted").")
+    }
+
+    func refreshInputMonitoringTrust(prompt: Bool) {
+        inputMonitoringTrusted = HIDPaddleMonitor.isInputMonitoringTrusted(prompt: prompt)
+        appendEvent("[InputMonitoring] Permission is \(inputMonitoringTrusted ? "trusted" : "not trusted").")
     }
 
     func assignFrontmostAppToSelectedProfile() {

@@ -54,21 +54,27 @@ If you trust the release source, this first-launch flow is expected:
 
 6. You can also try right-click/control-click -> **Open** on `Paddlr.app`, but the Privacy & Security **Open Anyway** path is usually required for this preview build.
 
-### 2. Grant Accessibility permission
+### 2. Grant macOS permissions
 
-Paddlr uses CoreGraphics keyboard events for output. macOS requires Accessibility permission for the app or host that launches it:
+Paddlr may need two separate macOS permissions:
+
+- **Accessibility** for keyboard output.
+- **Input Monitoring** for reading raw controller/HID input on some Macs, macOS versions, or connection paths.
 
 ```text
 System Settings -> Privacy & Security -> Accessibility
+System Settings -> Privacy & Security -> Input Monitoring
 ```
 
-If you launch `Paddlr.app`, grant Accessibility permission to Paddlr itself. If you run with `swift run`, grant Accessibility permission to Terminal or the `swift` host. Gatekeeper approval and Accessibility permission are separate steps.
+If you launch `Paddlr.app`, grant permissions to Paddlr itself. If you run with `swift run`, grant permissions to Terminal or the `swift` host. Gatekeeper approval, Accessibility permission, and Input Monitoring permission are separate steps.
 
-Move `Paddlr.app` to its final location, such as Applications, before granting Accessibility permission. If you grant permission first and then move the app, it should usually keep working, but macOS may ask again.
+Move `Paddlr.app` to its final location, such as Applications, before granting permissions. If you grant permission first and then move the app, it should usually keep working, but macOS may ask again.
 
 When the menu bar panel says **Accessibility: Permission Needed**, click **Grant Accessibility Permission** in Paddlr, then approve Paddlr in System Settings. Keyboard output will not work until Accessibility permission is granted.
 
-When updating from an earlier preview build, macOS may ask for Accessibility permission again. If Paddlr still appears untrusted after an update or move, remove the old Paddlr entry from Accessibility, add the current `Paddlr.app` from its final location, and enable it.
+When the menu bar panel says **Input Monitoring: Permission Needed**, click **Grant Input Monitoring Permission** in Paddlr, then approve Paddlr in System Settings. Paddle input may not be detected until Input Monitoring permission is granted.
+
+When updating from an earlier preview build, macOS may ask for permissions again. If Paddlr still appears untrusted after an update or move, remove the old Paddlr entry from Accessibility/Input Monitoring, add the current `Paddlr.app` from its final location, and enable it.
 
 ### 3. Set the controller to Profile 0
 
@@ -88,6 +94,7 @@ Open the menu bar panel to configure controller, application, profile, and paddl
    - The controller row is green when an Elite paddle device is connected, orange when a controller is detected without usable Elite paddle input, and red when no Elite device is found.
    - Use the retry button next to the controller row if detection needs to be refreshed.
    - The Accessibility row is green when macOS trusts the launcher for keyboard output. If it says **Accessibility: Permission Needed**, click **Grant Accessibility Permission** or grant permission in System Settings.
+   - The Input Monitoring row is green when macOS trusts Paddlr for raw controller input. If it says **Input Monitoring: Permission Needed**, click **Grant Input Monitoring Permission** or grant permission in System Settings.
 2. **Use the Keyboard output switch** in the top-right to turn all paddle output on or off without changing mappings.
 3. **Choose a controller** in the Controller section when more than one controller is visible.
    - Use the pencil button to give a controller a friendly name.

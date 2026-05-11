@@ -80,6 +80,14 @@ public struct HIDPaddleDeviceStatus: Equatable, Sendable {
 
 /// Monitors Xbox Elite paddle state through raw IOHID values when GameController does not expose paddles.
 public final class HIDPaddleMonitor {
+    public static func isInputMonitoringTrusted(prompt: Bool) -> Bool {
+        if prompt {
+            return IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+        }
+
+        return IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted
+    }
+
     private enum Constants {
         static let microsoftVendorID = 0x045E
         static let genericDesktopGamePadUsagePage = kHIDPage_GenericDesktop
@@ -264,7 +272,7 @@ public final class HIDPaddleMonitor {
         } else {
             updateDeviceStatus(HIDPaddleDeviceStatus(isConnected: false, deviceName: nil), notifyWhenUnchanged: true)
             log("Raw IOHID paddle monitor unavailable: IOHIDManagerOpen returned \(openStatus).")
-            log("If needed, grant the host terminal Input Monitoring permission and try again.")
+            log("If needed, grant Paddlr Input Monitoring permission and try again.")
             IOHIDManagerUnscheduleFromRunLoop(
                 manager,
                 CFRunLoopGetMain(),
