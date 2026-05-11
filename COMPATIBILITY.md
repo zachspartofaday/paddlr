@@ -14,6 +14,18 @@ Paddlr is intended as a lightweight companion to macOS's native controller profi
 | Controller profile | Use **Profile 0** / no profile LEDs for distinct paddle input. |
 | Output | Keyboard output through macOS Accessibility permission. Virtual gamepad/Xbox button output is not implemented yet. |
 
+## Controller IDs and firmware versions
+
+Known and candidate controller identifiers are tracked here so compatibility reports can be tied to specific hardware/firmware combinations.
+
+| Controller / reported product | Transport | Vendor ID | Product ID | Firmware | Status | Notes |
+|---|---|---:|---:|---|---|---|
+| Xbox Wireless Controller / Xbox Elite Series 2 | Bluetooth LE | `0x045e` | `0x0b22` | `5.24.4.0` | Validated | Raw IOHID paddle bits were observed on macOS 26 Tahoe. Profile 0 produced the cleanest behavior. |
+| Controller / Xbox Elite Series 2 | USB | `0x045e` | `0x0b00` | Unknown | Under investigation | Device identity was observed over USB, but unique wired paddle support still needs a lower-level backend. |
+| Xbox Elite Series 2 Core or related variant | Unknown | `0x045e` | `0x0b05` | Unknown | Needs validation | Known Elite-family product ID candidate; not validated in this project yet. |
+
+When reporting compatibility, include the controller's vendor ID, product ID, firmware version, transport, and active profile slot whenever possible.
+
 ## Controller profile guidance
 
 Set the Xbox Elite Series 2 controller to **Profile 0** before using Paddlr. Profile 0 is the default/no-profile-LED mode.

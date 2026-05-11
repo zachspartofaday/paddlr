@@ -15,7 +15,7 @@ All notable public-facing changes to Paddlr will be documented in this file.
 
 - Set the package minimum platform to macOS 15 and documented that validation has only covered Apple silicon Macs so far.
 - Documented that the controller should be set to Profile 0/default no-profile-LED mode for distinct paddle input.
-- Added public compatibility notes for hardware coverage, Profile 0 setup, macOS native controller profile positioning, and game-specific behavior such as Cult of the Lamb input glyph switching and World of Warcraft/ConsolePort dual input.
+- Added public compatibility notes for hardware coverage, controller IDs/firmware versions, Profile 0 setup, macOS native controller profile positioning, and game-specific behavior such as Cult of the Lamb input glyph switching and World of Warcraft/ConsolePort dual input.
 - Renamed the project from EliteMapper to Paddlr for public release preparation.
 - Made `swift run Paddlr` the primary menu bar app command and `swift run PaddlrDetect` the detection-only command.
 
