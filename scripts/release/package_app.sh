@@ -5,10 +5,10 @@ usage() {
   cat <<'USAGE'
 Usage: scripts/release/package_app.sh [options]
 
-Build and assemble dist/Paddlr.app from the SwiftPM Paddlr executable.
-Unsigned local packaging is the default. Ad-hoc signing is available without
-a paid Apple Developer account. Developer ID signing and notarization require
-operator-provided Apple credentials/certificates outside this repository.
+Build and assemble an unsigned dist/Paddlr.app from the SwiftPM Paddlr
+executable. This script is intended for source builds and unsigned
+convenience preview archives; it does not sign, notarize, or require an
+Apple Developer Program account.
 
 Options:
   --output-dir <path>        Directory for release artifacts (default: dist)
@@ -18,23 +18,12 @@ Options:
   --minimum-macos <version>  LSMinimumSystemVersion (default: 15.0)
   --skip-build               Reuse an existing .build release executable
   --clean                    Remove the output directory before packaging
-  --ad-hoc-sign             Sign locally with an ad-hoc signature (`codesign --sign -`)
-  --sign-identity <identity> Developer ID Application identity for codesign
-  --no-sign                  Force unsigned packaging even if PADDLR_CODESIGN_IDENTITY is set
-  --notarize                 Submit the packaged app to Apple notarization and staple it
-  --notary-profile <name>    notarytool keychain profile (or PADDLR_NOTARY_PROFILE)
-  --create-zip               Create dist/Paddlr-<version>.zip after packaging/notarization
-  --assess                   Run Gatekeeper assessment with spctl after signing/notarization
+  --create-zip               Create dist/Paddlr-<version>.zip after packaging
   -h, --help                 Show this help
 
-Environment:
-  PADDLR_CODESIGN_IDENTITY   Developer ID Application identity used when --sign-identity is omitted
-  PADDLR_NOTARY_PROFILE      notarytool keychain profile used when --notary-profile is omitted
-
 Examples:
-  scripts/release/package_app.sh --ad-hoc-sign --create-zip
-  scripts/release/package_app.sh --sign-identity "Developer ID Application: Example (TEAMID)"
-  scripts/release/package_app.sh --sign-identity "$PADDLR_CODESIGN_IDENTITY" --notarize --notary-profile paddlr-notary --create-zip
+  scripts/release/package_app.sh
+  scripts/release/package_app.sh --clean --create-zip
 USAGE
 }
 
@@ -48,14 +37,7 @@ bundle_id="com.zachskjaveland.paddlr"
 minimum_macos="15.0"
 skip_build=false
 clean_output=false
-sign_identity="${PADDLR_CODESIGN_IDENTITY:-}"
-sign_requested=false
-ad_hoc_sign=false
-force_no_sign=false
-notarize=false
-notary_profile="${PADDLR_NOTARY_PROFILE:-}"
 create_zip=false
-assess=false
 version=""
 build_number=""
 
@@ -129,41 +111,8 @@ while [[ $# -gt 0 ]]; do
       clean_output=true
       shift
       ;;
-    --ad-hoc-sign)
-      sign_identity="-"
-      sign_requested=true
-      ad_hoc_sign=true
-      shift
-      ;;
-    --sign-identity)
-      require_value "$1" "${2:-}"
-      sign_identity=$2
-      sign_requested=true
-      ad_hoc_sign=false
-      shift 2
-      ;;
-    --no-sign)
-      force_no_sign=true
-      sign_requested=false
-      ad_hoc_sign=false
-      sign_identity=""
-      shift
-      ;;
-    --notarize)
-      notarize=true
-      shift
-      ;;
-    --notary-profile)
-      require_value "$1" "${2:-}"
-      notary_profile=$2
-      shift 2
-      ;;
     --create-zip)
       create_zip=true
-      shift
-      ;;
-    --assess)
-      assess=true
       shift
       ;;
     -h|--help)
@@ -184,26 +133,6 @@ fi
 
 if [[ -z "$build_number" ]]; then
   build_number=$(utc_build_number)
-fi
-
-if [[ "$sign_identity" == "-" && "$force_no_sign" != true ]]; then
-  ad_hoc_sign=true
-fi
-
-if [[ -n "$sign_identity" && "$force_no_sign" != true ]]; then
-  sign_requested=true
-fi
-
-if [[ "$notarize" == true ]]; then
-  if [[ -z "$notary_profile" ]]; then
-    echo "--notarize requires --notary-profile or PADDLR_NOTARY_PROFILE." >&2
-    exit 2
-  fi
-  if [[ -z "$sign_identity" || "$force_no_sign" == true || "$ad_hoc_sign" == true ]]; then
-    echo "--notarize requires Developer ID signing via --sign-identity or PADDLR_CODESIGN_IDENTITY." >&2
-    exit 2
-  fi
-  sign_requested=true
 fi
 
 if [[ ! -f "$info_plist_template" ]]; then
@@ -260,38 +189,6 @@ fi
 /usr/libexec/PlistBuddy -c "Set :LSMinimumSystemVersion $minimum_macos" "$info_plist"
 plutil -lint "$info_plist" >/dev/null
 
-if [[ "$sign_requested" == true ]]; then
-  if [[ "$ad_hoc_sign" == true ]]; then
-    echo "Ad-hoc signing $app_path"
-    codesign --force --options runtime --sign - "$app_path"
-  else
-    echo "Signing $app_path"
-    codesign --force --timestamp --options runtime --sign "$sign_identity" "$app_path"
-  fi
-  codesign --verify --strict --verbose=2 "$app_path"
-else
-  echo "Created unsigned app bundle. Pass --ad-hoc-sign for local signing or --sign-identity to create a Developer ID signed build."
-fi
-
-if [[ "$notarize" == true ]]; then
-  notary_zip="$output_dir/Paddlr-notary-upload-$version.zip"
-  rm -f "$notary_zip"
-  (
-    cd "$output_dir"
-    ditto -c -k --sequesterRsrc --keepParent "$bundle_name" "$notary_zip"
-  )
-
-  echo "Submitting $notary_zip to Apple notarization with keychain profile '$notary_profile'."
-  xcrun notarytool submit "$notary_zip" --keychain-profile "$notary_profile" --wait
-  xcrun stapler staple "$app_path"
-  xcrun stapler validate "$app_path"
-  spctl --assess --type execute --verbose=4 "$app_path"
-fi
-
-if [[ "$assess" == true && "$notarize" != true ]]; then
-  spctl --assess --type execute --verbose=4 "$app_path"
-fi
-
 if [[ "$create_zip" == true ]]; then
   final_zip="$output_dir/Paddlr-$version.zip"
   rm -f "$final_zip"
@@ -302,6 +199,6 @@ if [[ "$create_zip" == true ]]; then
   echo "Created archive: $final_zip"
 fi
 
-echo "Created app bundle: $app_path"
+echo "Created unsigned app bundle: $app_path"
 echo "Bundle identifier: $bundle_id"
 echo "Version: $version ($build_number)"

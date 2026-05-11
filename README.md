@@ -44,33 +44,22 @@ swift run Paddlr
 
 The app appears as an icon in the macOS menu bar. Click the icon to open the mapping panel.
 
-## Package as a macOS app
+## Download the convenience app
 
-Create a local ad-hoc signed app bundle without a paid Apple Developer account:
+Paddlr releases include an unsigned `.zip` archive containing `Paddlr.app` for users who do not want to build from source.
+
+Because the app is unsigned, macOS may show a Gatekeeper warning the first time you open it. If you trust the release source, unzip the archive, move `Paddlr.app` to Applications, then use right-click/control-click -> **Open** or the Privacy & Security prompt to approve it.
+
+## Package as a macOS app from source
+
+If you build from source, you can create the same unsigned convenience app bundle locally:
 
 ```bash
-scripts/release/package_app.sh --ad-hoc-sign --create-zip
+scripts/release/package_app.sh --clean --create-zip
 open dist/Paddlr.app
 ```
 
-Ad-hoc signed builds are useful for local testing and source-first previews, but downloaded archives may still show macOS Gatekeeper warnings because they are not signed with Developer ID or notarized.
-
-For public distribution without Gatekeeper warnings, sign and notarize with paid Apple Developer Program / Developer ID credentials stored outside the repo. First create a `notarytool` keychain profile, then package with signing/notarization enabled:
-
-```bash
-xcrun notarytool store-credentials paddlr-notary \
-  --apple-id "you@example.com" \
-  --team-id "TEAMID" \
-  --password "app-specific-password"
-
-scripts/release/package_app.sh \
-  --sign-identity "Developer ID Application: Your Name (TEAMID)" \
-  --notarize \
-  --notary-profile paddlr-notary \
-  --create-zip
-```
-
-The script creates `dist/Paddlr.app` and, when requested, a zipped release archive. It embeds the Paddlr app icon, never changes repository visibility, and does not store Apple credentials.
+The script creates `dist/Paddlr.app` and, when requested, a zipped release archive. It embeds the Paddlr app icon and never changes repository visibility.
 
 ## Menu bar icon states
 
@@ -128,7 +117,7 @@ Paddlr uses CoreGraphics keyboard events for output. macOS requires Accessibilit
 System Settings -> Privacy & Security -> Accessibility
 ```
 
-If you run with `swift run`, grant Accessibility permission to Terminal or the `swift` host. If you launch `Paddlr.app`, grant Accessibility permission to Paddlr itself. Signing and notarization reduce Gatekeeper friction but do not remove the Accessibility permission requirement.
+If you run with `swift run`, grant Accessibility permission to Terminal or the `swift` host. If you launch `Paddlr.app`, grant Accessibility permission to Paddlr itself. The downloaded convenience app is unsigned, so Gatekeeper approval and Accessibility permission are separate steps.
 
 ## Diagnostics
 
