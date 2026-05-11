@@ -1,0 +1,21 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# Xcode / Apple platforms
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcuserstate
+
+# Editor-local files
+.vscode/
+
+# macOS
+.DS_Store
+
+# Pi / local temporary artifacts
+tmp/
+pi-session-*.html
+docs/pi/KQS_AGENT_ERROR_LOG.md
