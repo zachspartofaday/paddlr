@@ -196,11 +196,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         alert.messageText = prompt.messageText
         alert.informativeText = prompt.informativeText
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "Quit Paddlr")
+        alert.addButton(withTitle: "Restart Paddlr")
         alert.addButton(withTitle: "Later")
 
         if alert.runModal() == .alertFirstButtonReturn {
+            restartApplication()
+        }
+    }
+
+    private func restartApplication() {
+        guard scheduleRelaunch() else {
             NSApplication.shared.terminate(nil)
+            return
+        }
+
+        NSApplication.shared.terminate(nil)
+    }
+
+    private func scheduleRelaunch() -> Bool {
+        let relaunchURL = Bundle.main.bundleURL.pathExtension == "app"
+            ? Bundle.main.bundleURL
+            : Bundle.main.executableURL
+        guard let relaunchPath = relaunchURL?.path else {
+            return false
+        }
+
+        let script = Bundle.main.bundleURL.pathExtension == "app"
+            ? "sleep 0.8; /usr/bin/open -n \"$1\""
+            : "sleep 0.8; \"$1\""
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", script, "paddlr-restart", relaunchPath]
+        process.standardInput = FileHandle(forReadingAtPath: "/dev/null")
+        process.standardOutput = FileHandle(forWritingAtPath: "/dev/null")
+        process.standardError = FileHandle(forWritingAtPath: "/dev/null")
+
+        do {
+            try process.run()
+            return true
+        } catch {
+            return false
         }
     }
 

@@ -666,7 +666,7 @@ final class MenuBarMapperModel: ObservableObject {
         permissionRequestObservedApplicationResignActive = false
         return PermissionRestartPrompt(
             messageText: "Restart Paddlr to finish permission changes",
-            informativeText: "macOS permission changes may not take effect in a running app immediately. Quit and reopen Paddlr if controller input or keyboard output still does not work."
+            informativeText: "macOS permission changes may not take effect in a running app immediately. Click Restart Paddlr to quit and reopen automatically."
         )
     }
 

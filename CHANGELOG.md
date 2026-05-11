@@ -6,6 +6,13 @@ All notable public-facing changes to Paddlr will be documented in this file.
 
 - No unreleased public-facing changes yet.
 
+## 0.1.8 - 2026-05-11
+
+### Changed
+
+- Changed the post-permission prompt button from **Quit Paddlr** to **Restart Paddlr**.
+- Choosing **Restart Paddlr** now quits and automatically reopens the app.
+
 ## 0.1.7 - 2026-05-11
 
 ### Changed
