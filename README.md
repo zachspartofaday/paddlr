@@ -83,7 +83,7 @@ Open the menu bar panel to configure controller, application, profile, and paddl
    - The current frontmost app appears automatically when Paddlr can identify it.
    - Paddlr keeps **Default**, pinned apps, saved-rule apps, and the three most recently detected apps in the selector.
    - Use the pin button beside **+** to keep the selected app in the list even when it uses the default profile; pinned apps show an **x** button so you can unpin them later.
-   - Use **+** to add another `.app` bundle manually.
+   - Use **+** to add and pin another `.app` bundle manually; it will show the same **x** control until unpinned.
    - Toggle **Enable for this app** off to disable paddle output only for the selected app.
 5. **Choose or create a profile** in the Profile section.
    - Use **+** to create a profile, the pencil to rename it, and **x** to delete a non-default profile.

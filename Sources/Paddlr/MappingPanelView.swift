@@ -682,7 +682,7 @@ struct MappingPanelView: View {
                 bundle.object(forInfoDictionaryKey: "CFBundleName") as? String ??
                 appURL.deletingPathExtension().lastPathComponent
 
-            model.assignAppToSelectedProfile(bundleIdentifier: bundleIdentifier, appName: displayName)
+            model.pinApplication(bundleIdentifier: bundleIdentifier, appName: displayName)
             selectedAppBundleIdentifier = bundleIdentifier
         }
     }
