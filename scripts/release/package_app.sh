@@ -7,8 +7,7 @@ Usage: scripts/release/package_app.sh [options]
 
 Build and assemble an unsigned dist/Paddlr.app from the SwiftPM Paddlr
 executable. This script is intended for source builds and unsigned
-convenience preview archives; it does not sign, notarize, or require an
-Apple Developer Program account.
+convenience preview archives.
 
 Options:
   --output-dir <path>        Directory for release artifacts (default: dist)
