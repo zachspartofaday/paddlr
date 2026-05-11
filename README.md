@@ -42,27 +42,18 @@ The app appears as an icon in the macOS menu bar. Click the icon to open the map
 
 ## Menu bar icon states
 
-Paddlr's menu bar icon shows two pieces of status at once:
+Paddlr combines output state and controller status in one menu bar icon:
 
 ![Paddlr menu bar icon state examples](assets/screenshots/paddlr-menu-bar-states.png)
 
-The actual icons are rendered by macOS from SF Symbols (`gamecontroller.circle.fill` and `gamecontroller.circle`), so the accent color follows your system accent color. The examples above use enlarged menu bar captures for readability.
+The examples above are enlarged captures. The actual icon is rendered by macOS from SF Symbols, and the accent color follows your system setting.
 
-| Icon state | Meaning |
-| --- | --- |
-| Filled controller circle | Paddle keyboard output is enabled for the current application. |
-| Outline controller circle | Paddle keyboard output is disabled for the current application. This can happen when the global keyboard-output switch is off, the default application rule is disabled, or the current app has its own disabled rule. |
-| Accent-colored status mark | A supported Xbox Elite paddle device is connected and available. |
-| Red status mark | No supported Elite paddle device is currently connected, or Paddlr is still waiting for one. |
+- **Filled** means paddle keyboard output is enabled for the current app.
+- **Outlined** means output is disabled for the current app.
+- **Accent color** means a supported Elite paddle controller is connected.
+- **Red** means Paddlr does not currently see a supported paddle controller.
 
-Common combinations:
-
-- **Filled + accent color:** ready; paddles should emit the configured keyboard output.
-- **Outline + accent color:** controller is connected, but output is disabled for the active app.
-- **Filled + red:** mappings are enabled, but Paddlr does not currently see a supported paddle device.
-- **Outline + red:** output is disabled and no supported paddle device is connected.
-
-Click the icon to open or close the mapping panel. Right-click or Control-click it to show the small status menu with **Quit Paddlr**.
+Click the icon to open or close the mapping panel. Right-click or Control-click it to show **Quit Paddlr**.
 
 ## Configuring Paddlr from the menu bar UI
 
