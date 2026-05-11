@@ -36,7 +36,8 @@ Profiles 1-3 can emit the controller's firmware-mapped buttons in addition to pa
 
 | Game/app | Status | Notes |
 |---|---|---|
-| Cult of the Lamb | Known glyph-switching behavior | The game dynamically switches visible input prompts based on the most recent input method. Pressing paddles mapped to keyboard keys can temporarily show keyboard prompts, while normal Xbox controller buttons can switch prompts back to Xbox glyphs. |
+| Cult of the Lamb (Apple Arcade) | Known glyph-switching behavior | The game dynamically switches visible input prompts based on the most recent input method. Pressing paddles mapped to keyboard keys can temporarily show keyboard prompts, while normal Xbox controller buttons can switch prompts back to Xbox glyphs. Steam and other store versions are not tested yet. |
+| Dredge+ (Apple Arcade) | Known glyph-switching behavior | Similar dynamic prompt switching was observed, though less frequently than in Cult of the Lamb. Steam and other store versions are not tested yet. |
 | World of Warcraft with ConsolePort | Known dual-input behavior | ConsolePort can detect Elite paddles natively. If the paddles are also mapped to keyboard binds and Paddlr is enabled for World of Warcraft, the game/add-on can receive both the native paddle input and Paddlr's keyboard output. Disable Paddlr for World of Warcraft or avoid duplicate binds when using ConsolePort's native paddle support. |
 
 ## General gameplay notes
