@@ -1,5 +1,9 @@
 # Paddlr
 
+<p align="center">
+  <img src="assets/logos/paddlr-logo.svg" alt="Paddlr logo" width="96" />
+</p>
+
 Paddlr is a lightweight macOS menu bar companion for using the four back paddles on an Xbox Elite Series 2 controller as distinct keyboard shortcuts.
 
 macOS already includes native controller profiles for rebinding the standard Xbox buttons. Paddlr is intended to complement that built-in support by focusing on the Elite back paddles and mapping them to keyboard output.
@@ -23,7 +27,7 @@ It is currently focused on safe keyboard output: each paddle can send a configur
   - Paddle 3 -> F15
   - Paddle 4 -> F16
 
-## Build and run
+## Build and run from source
 
 Build and run the self-test:
 
@@ -32,13 +36,41 @@ swift build
 swift run PaddlrSelfTest
 ```
 
-Run the menu bar app:
+Run the menu bar app directly from SwiftPM:
 
 ```bash
 swift run Paddlr
 ```
 
 The app appears as an icon in the macOS menu bar. Click the icon to open the mapping panel.
+
+## Package as a macOS app
+
+Create a local ad-hoc signed app bundle without a paid Apple Developer account:
+
+```bash
+scripts/release/package_app.sh --ad-hoc-sign --create-zip
+open dist/Paddlr.app
+```
+
+Ad-hoc signed builds are useful for local testing and source-first previews, but downloaded archives may still show macOS Gatekeeper warnings because they are not signed with Developer ID or notarized.
+
+For public distribution without Gatekeeper warnings, sign and notarize with paid Apple Developer Program / Developer ID credentials stored outside the repo. First create a `notarytool` keychain profile, then package with signing/notarization enabled:
+
+```bash
+xcrun notarytool store-credentials paddlr-notary \
+  --apple-id "you@example.com" \
+  --team-id "TEAMID" \
+  --password "app-specific-password"
+
+scripts/release/package_app.sh \
+  --sign-identity "Developer ID Application: Your Name (TEAMID)" \
+  --notarize \
+  --notary-profile paddlr-notary \
+  --create-zip
+```
+
+The script creates `dist/Paddlr.app` and, when requested, a zipped release archive. It embeds the Paddlr app icon, never changes repository visibility, and does not store Apple credentials.
 
 ## Menu bar icon states
 
@@ -90,13 +122,13 @@ For distinct paddle input, set the Xbox Elite Series 2 controller to **Profile 0
 
 ## Permissions
 
-Paddlr uses CoreGraphics keyboard events for output. macOS may require Accessibility permission for the terminal or host app that launches it:
+Paddlr uses CoreGraphics keyboard events for output. macOS requires Accessibility permission for the app or host that launches it:
 
 ```text
 System Settings -> Privacy & Security -> Accessibility
 ```
 
-If the app launches from Terminal, grant Accessibility permission to Terminal or the `swift` host.
+If you run with `swift run`, grant Accessibility permission to Terminal or the `swift` host. If you launch `Paddlr.app`, grant Accessibility permission to Paddlr itself. Signing and notarization reduce Gatekeeper friction but do not remove the Accessibility permission requirement.
 
 ## Diagnostics
 
@@ -137,7 +169,6 @@ See [Compatibility Notes](COMPATIBILITY.md) for current hardware, controller-pro
 - Games that listen directly to controller input may still see the controller's own signals.
 - Games that dynamically switch visible input glyphs may alternate between keyboard and Xbox button prompts when paddles mapped to keyboard keys are pressed. Known examples are tracked in [Compatibility Notes](COMPATIBILITY.md).
 - Xbox Wireless Adapter support is not expected on macOS.
-- App bundle packaging/signing/notarization is not included yet.
 
 ## License
 
