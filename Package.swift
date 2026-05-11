@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "Paddlr",
     platforms: [
-        .macOS(.v11)
+        .macOS("15.0")
     ],
     products: [
         .executable(name: "Paddlr", targets: ["Paddlr"]),

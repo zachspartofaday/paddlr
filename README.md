@@ -1,6 +1,8 @@
 # Paddlr
 
-Paddlr is a macOS menu bar utility for using the four back paddles on an Xbox Elite Series 2 controller as distinct keyboard shortcuts.
+Paddlr is a lightweight macOS menu bar companion for using the four back paddles on an Xbox Elite Series 2 controller as distinct keyboard shortcuts.
+
+macOS already includes native controller profiles for rebinding the standard Xbox buttons. Paddlr is intended to complement that built-in support by focusing on the Elite back paddles and mapping them to keyboard output.
 
 It is currently focused on safe keyboard output: each paddle can send a configurable key such as F13-F16, arrows, letters, numbers, or modifiers.
 
@@ -17,7 +19,8 @@ It is currently focused on safe keyboard output: each paddle can send a configur
 ## Current status
 
 - Primary target: macOS 26 Tahoe
-- Minimum Swift package platform: macOS 11
+- Minimum macOS version: macOS 15
+- Tested hardware: Apple silicon Macs only so far; Intel Macs are not yet validated
 - Primary app: `Paddlr`
 - Output today: keyboard events through macOS Accessibility permission
 - Default mappings:
@@ -42,6 +45,10 @@ swift run Paddlr
 ```
 
 The app appears as an icon in the macOS menu bar. Click the icon to open the mapping panel.
+
+## Controller setup
+
+For distinct paddle input, set the Xbox Elite Series 2 controller to **Profile 0** before using Paddlr. Profile 0 is the default/no-profile-LED mode. Profiles 1-3 can also emit the controller's firmware-mapped buttons, which may cause games to see both the native controller input and Paddlr's keyboard output.
 
 ## Permissions
 
@@ -79,15 +86,18 @@ swift run PaddlrRawReportProbe
 
 ## Known issues and planned features
 
-- **Xbox/gamepad button output is planned.** Paddlr currently sends keyboard output, not virtual gamepad buttons such as A/B/X/Y.
+- **Xbox/gamepad button output is planned.** Paddlr currently sends keyboard output, not virtual gamepad buttons such as A/B/X/Y. For standard Xbox button rebinding, use macOS's native controller profiles.
 - **USB wired Elite 2 support needs more work.** Bluetooth paddle input works through the currently validated path; a lower-level USB backend is still under investigation.
-- **More controller variants need validation.** Additional Elite controller models, firmware versions, and connection modes should be tested before broad compatibility claims.
+- **More controller variants need validation.** Additional Elite controller models, firmware versions, connection modes, and Intel Macs should be tested before broad compatibility claims.
 - **Left/right modifier-specific mappings are planned.** Current modifier mappings are generic Shift/Control/Option/Command rather than side-specific variants.
+
+See [Compatibility Notes](COMPATIBILITY.md) for current hardware, controller-profile, and game-specific notes.
 
 ## Limitations
 
 - Paddlr does not suppress native controller input. It adds keyboard output when paddle input is detected.
 - Games that listen directly to controller input may still see the controller's own signals.
+- Games that dynamically switch visible input glyphs may alternate between keyboard and Xbox button prompts when paddles mapped to keyboard keys are pressed. Known examples are tracked in [Compatibility Notes](COMPATIBILITY.md).
 - Xbox Wireless Adapter support is not expected on macOS.
 - App bundle packaging/signing/notarization is not included yet.
 
