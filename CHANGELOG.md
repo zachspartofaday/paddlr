@@ -10,6 +10,8 @@ All notable public-facing changes to Paddlr will be documented in this file.
 - Added configurable paddle mappings, named profiles, controller selection, app pinning, controller-scoped default mappings, and per-app rules that can be scoped to the selected controller.
 - Added diagnostic command-line tools for controller and HID investigation.
 - Added a no-dependency self-test with `swift run PaddlrSelfTest`.
+- Added the Paddlr app icon and small public README logo.
+- Added `scripts/release/package_app.sh` for creating an unsigned `dist/Paddlr.app` and optional convenience zip archive from source.
 
 ### Changed
 

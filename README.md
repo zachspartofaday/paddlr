@@ -1,5 +1,9 @@
 # Paddlr
 
+<p align="center">
+  <img src="assets/logos/paddlr-logo.svg" alt="Paddlr logo" width="96" />
+</p>
+
 Paddlr is a lightweight macOS menu bar companion for using the four back paddles on an Xbox Elite Series 2 controller as distinct keyboard shortcuts.
 
 macOS already includes native controller profiles for rebinding the standard Xbox buttons. Paddlr is intended to complement that built-in support by focusing on the Elite back paddles and mapping them to keyboard output.
@@ -23,7 +27,7 @@ It is currently focused on safe keyboard output: each paddle can send a configur
   - Paddle 3 -> F15
   - Paddle 4 -> F16
 
-## Build and run
+## Build and run from source
 
 Build and run the self-test:
 
@@ -32,13 +36,30 @@ swift build
 swift run PaddlrSelfTest
 ```
 
-Run the menu bar app:
+Run the menu bar app directly from SwiftPM:
 
 ```bash
 swift run Paddlr
 ```
 
 The app appears as an icon in the macOS menu bar. Click the icon to open the mapping panel.
+
+## Download the convenience app
+
+Paddlr releases include an unsigned `.zip` archive containing `Paddlr.app` for users who do not want to build from source.
+
+Because the app is unsigned, macOS may show a Gatekeeper warning the first time you open it. If you trust the release source, unzip the archive, move `Paddlr.app` to Applications, then use right-click/control-click -> **Open** or the Privacy & Security prompt to approve it.
+
+## Package as a macOS app from source
+
+If you build from source, you can create the same unsigned convenience app bundle locally:
+
+```bash
+scripts/release/package_app.sh --clean --create-zip
+open dist/Paddlr.app
+```
+
+The script creates `dist/Paddlr.app` and, when requested, a zipped release archive. It embeds the Paddlr app icon and never changes repository visibility.
 
 ## Menu bar icon states
 
@@ -90,13 +111,13 @@ For distinct paddle input, set the Xbox Elite Series 2 controller to **Profile 0
 
 ## Permissions
 
-Paddlr uses CoreGraphics keyboard events for output. macOS may require Accessibility permission for the terminal or host app that launches it:
+Paddlr uses CoreGraphics keyboard events for output. macOS requires Accessibility permission for the app or host that launches it:
 
 ```text
 System Settings -> Privacy & Security -> Accessibility
 ```
 
-If the app launches from Terminal, grant Accessibility permission to Terminal or the `swift` host.
+If you run with `swift run`, grant Accessibility permission to Terminal or the `swift` host. If you launch `Paddlr.app`, grant Accessibility permission to Paddlr itself. The downloaded convenience app is unsigned, so Gatekeeper approval and Accessibility permission are separate steps.
 
 ## Diagnostics
 
@@ -137,7 +158,6 @@ See [Compatibility Notes](COMPATIBILITY.md) for current hardware, controller-pro
 - Games that listen directly to controller input may still see the controller's own signals.
 - Games that dynamically switch visible input glyphs may alternate between keyboard and Xbox button prompts when paddles mapped to keyboard keys are pressed. Known examples are tracked in [Compatibility Notes](COMPATIBILITY.md).
 - Xbox Wireless Adapter support is not expected on macOS.
-- App bundle packaging/signing/notarization is not included yet.
 
 ## License
 

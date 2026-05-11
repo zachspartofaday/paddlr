@@ -19,3 +19,9 @@ DerivedData/
 tmp/
 pi-session-*.html
 docs/pi/KQS_AGENT_ERROR_LOG.md
+
+# Release artifacts
+dist/
+*.zip
+*.dmg
+*.pkg
