@@ -332,8 +332,8 @@ private extension NSImage {
     }
 }
 
-guard let singleInstanceLock = SingleInstanceLock(name: "Paddlr") else {
-    fputs("Paddlr is already running.\n", stderr)
+guard let singleInstanceLock = SingleInstanceLock(name: "EliteMapperMenuBar") else {
+    fputs("Paddlr is already running, or a legacy EliteMapperMenuBar instance is still running.\n", stderr)
     exit(EXIT_FAILURE)
 }
 
