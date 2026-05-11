@@ -9,6 +9,11 @@ struct MenuBarStatusItemState: Equatable, Hashable {
     var isControllerConnected: Bool
 }
 
+struct PermissionRestartPrompt: Equatable, Hashable {
+    var messageText: String
+    var informativeText: String
+}
+
 struct MenuBarControllerSelection: Identifiable, Hashable {
     var identifier: String
     var displayName: String
@@ -192,6 +197,11 @@ final class MenuBarMapperModel: ObservableObject {
         return formatter
     }()
 
+    private enum PermissionRestartPromptKind {
+        case accessibility
+        case controllerInputAccess
+    }
+
     private let defaults: UserDefaults
     private var monitor: HIDPaddleMonitor?
     private var frontmostAppMonitor: FrontmostAppMonitor?
@@ -202,6 +212,9 @@ final class MenuBarMapperModel: ObservableObject {
     private var defaultSelectedProfileID: UUID
     private var isSyncingSelectedProfileFromController = false
     private var selectedControllerSelectionWasUserInitiated = false
+    private var pendingPermissionRestartPromptKind: PermissionRestartPromptKind?
+    private var pendingPermissionRestartPromptArmedAt: Date?
+    private var permissionRequestObservedApplicationResignActive = false
     private var livePressedPaddlesByController: [String: Set<Paddle>] = [:]
     private var postedKeyboardByControllerPaddle: [ControllerPaddleKey: KeyboardMapping] = [:]
 
@@ -606,11 +619,19 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     func refreshAccessibilityTrust(prompt: Bool) {
+        if prompt {
+            armPermissionRestartPrompt(for: .accessibility)
+        }
+
         accessibilityTrusted = KeyboardOutputSynthesizer.isAccessibilityTrusted(prompt: prompt)
         appendEvent("[Accessibility] Permission is \(accessibilityTrusted ? "trusted" : "not trusted").")
     }
 
     func refreshInputMonitoringTrust(prompt: Bool) {
+        if prompt {
+            armPermissionRestartPrompt(for: .controllerInputAccess)
+        }
+
         inputMonitoringTrusted = HIDPaddleMonitor.isInputMonitoringTrusted(prompt: prompt)
         appendEvent("[ControllerInputAccess] Permission is \(inputMonitoringTrusted ? "ready" : "not ready").")
 
@@ -620,6 +641,33 @@ final class MenuBarMapperModel: ObservableObject {
             monitorStatus = "Controller input access needed."
             appendEvent("[ControllerInputAccess] Approve Paddlr in System Settings, then click the button again if needed.")
         }
+    }
+
+    func noteApplicationDidResignActive() {
+        if pendingPermissionRestartPromptKind != nil {
+            permissionRequestObservedApplicationResignActive = true
+        }
+    }
+
+    func consumePermissionRestartPromptAfterActivation() -> PermissionRestartPrompt? {
+        guard pendingPermissionRestartPromptKind != nil else {
+            return nil
+        }
+
+        refreshPermissionTrustAfterReturn()
+
+        guard permissionRequestObservedApplicationResignActive else {
+            clearStalePermissionRestartPromptIfNeeded()
+            return nil
+        }
+
+        pendingPermissionRestartPromptKind = nil
+        pendingPermissionRestartPromptArmedAt = nil
+        permissionRequestObservedApplicationResignActive = false
+        return PermissionRestartPrompt(
+            messageText: "Restart Paddlr to finish permission changes",
+            informativeText: "macOS permission changes may not take effect in a running app immediately. Quit and reopen Paddlr if controller input or keyboard output still does not work."
+        )
     }
 
     func assignFrontmostAppToSelectedProfile() {
@@ -803,6 +851,36 @@ final class MenuBarMapperModel: ObservableObject {
         pinnedApplications = applications
         persistPinnedApplications()
         appendEvent("[App] Unpinned \(appName ?? bundleIdentifier).")
+    }
+
+    private func armPermissionRestartPrompt(for kind: PermissionRestartPromptKind) {
+        pendingPermissionRestartPromptKind = kind
+        pendingPermissionRestartPromptArmedAt = Date()
+        permissionRequestObservedApplicationResignActive = false
+    }
+
+    private func clearStalePermissionRestartPromptIfNeeded() {
+        guard let armedAt = pendingPermissionRestartPromptArmedAt,
+              Date().timeIntervalSince(armedAt) > 2 else {
+            return
+        }
+
+        pendingPermissionRestartPromptKind = nil
+        pendingPermissionRestartPromptArmedAt = nil
+        permissionRequestObservedApplicationResignActive = false
+    }
+
+    private func refreshPermissionTrustAfterReturn() {
+        accessibilityTrusted = KeyboardOutputSynthesizer.isAccessibilityTrusted(prompt: false)
+        inputMonitoringTrusted = HIDPaddleMonitor.isInputMonitoringTrusted(prompt: false)
+        appendEvent("[Accessibility] Permission is \(accessibilityTrusted ? "trusted" : "not trusted").")
+        appendEvent("[ControllerInputAccess] Permission is \(inputMonitoringTrusted ? "ready" : "not ready").")
+
+        if inputMonitoringTrusted {
+            startMonitor()
+        } else {
+            updateStatusItemState()
+        }
     }
 
     private func startMonitor() {

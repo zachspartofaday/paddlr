@@ -1,3 +1,4 @@
+import CoreGraphics
 import Darwin
 import Foundation
 import IOKit.hid
@@ -82,10 +83,20 @@ public struct HIDPaddleDeviceStatus: Equatable, Sendable {
 public final class HIDPaddleMonitor {
     public static func isInputMonitoringTrusted(prompt: Bool) -> Bool {
         if prompt {
-            return IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+            return requestControllerInputAccess()
         }
 
-        return IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted
+        return isControllerInputAccessReady
+    }
+
+    public static var isControllerInputAccessReady: Bool {
+        IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted
+    }
+
+    public static func requestControllerInputAccess() -> Bool {
+        let inputMonitoringAccessGranted = CGRequestListenEventAccess()
+        let hidAccessGranted = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+        return inputMonitoringAccessGranted || hidAccessGranted || isControllerInputAccessReady
     }
 
     private enum Constants {

@@ -129,6 +129,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         model.shutdown()
     }
 
+    func applicationDidResignActive(_ notification: Notification) {
+        model.noteApplicationDidResignActive()
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        guard let prompt = model.consumePermissionRestartPromptAfterActivation() else {
+            return
+        }
+
+        showPermissionRestartPrompt(prompt)
+    }
+
     func popoverDidClose(_ notification: Notification) {
         model.setPopoverVisible(false)
     }
@@ -145,6 +157,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     @objc private func quitApplication(_ sender: AnyObject?) {
         NSApplication.shared.terminate(sender)
+    }
+
+    private func showPermissionRestartPrompt(_ prompt: PermissionRestartPrompt) {
+        let alert = NSAlert()
+        alert.messageText = prompt.messageText
+        alert.informativeText = prompt.informativeText
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Quit Paddlr")
+        alert.addButton(withTitle: "Later")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            NSApplication.shared.terminate(nil)
+        }
     }
 
     private func togglePopover(_ sender: AnyObject?) {

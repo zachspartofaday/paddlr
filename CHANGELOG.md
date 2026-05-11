@@ -6,6 +6,13 @@ All notable public-facing changes to Paddlr will be documented in this file.
 
 - No unreleased public-facing changes yet.
 
+## 0.1.6 - 2026-05-11
+
+### Changed
+
+- The **Grant Controller Input Access** button now requests both macOS Input Monitoring/listen-event access and raw HID controller access.
+- After either permission request sends the user away from Paddlr and the app becomes active again, Paddlr prompts the user to restart so macOS permission changes apply cleanly.
+
 ## 0.1.5 - 2026-05-11
 
 ### Changed
