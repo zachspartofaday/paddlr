@@ -339,6 +339,15 @@ struct MappingPanelView: View {
                 .buttonStyle(.borderless)
                 .help("Add App")
 
+                Button {
+                    toggleSelectedApplicationPin()
+                } label: {
+                    Image(systemName: selectedApplicationIsPinned ? "xmark" : "pin")
+                }
+                .buttonStyle(.borderless)
+                .disabled(selectedApp?.isDefault ?? true)
+                .help(selectedApplicationIsPinned ? "Unpin App" : "Pin App")
+
                 Spacer()
 
                 Toggle("Enable for this app", isOn: selectedApplicationOutputBinding)
@@ -350,6 +359,13 @@ struct MappingPanelView: View {
 
     private var appSelections: [AppSelection] {
         var selections: [AppSelection] = [.appDefault]
+
+        for app in model.pinnedApplications {
+            appendAppSelection(
+                AppSelection(bundleIdentifier: app.bundleIdentifier, appName: app.appName),
+                to: &selections
+            )
+        }
 
         for app in model.observedApplications {
             appendAppSelection(from: app, to: &selections)
@@ -398,6 +414,14 @@ struct MappingPanelView: View {
         }
 
         return model.appRules.first(where: { $0.bundleIdentifier == selectedApp.bundleIdentifier })
+    }
+
+    private var selectedApplicationIsPinned: Bool {
+        guard let selectedApp, !selectedApp.isDefault else {
+            return false
+        }
+
+        return model.isApplicationPinned(bundleIdentifier: selectedApp.bundleIdentifier)
     }
 
     private var selectedApplicationOutputEnabled: Bool {
@@ -621,6 +645,18 @@ struct MappingPanelView: View {
         }
 
         selectedAppBundleIdentifier = appSelections.first?.bundleIdentifier
+    }
+
+    private func toggleSelectedApplicationPin() {
+        guard let selectedApp, !selectedApp.isDefault else {
+            return
+        }
+
+        if selectedApplicationIsPinned {
+            model.unpinApplication(bundleIdentifier: selectedApp.bundleIdentifier, appName: selectedApp.appName)
+        } else {
+            model.pinApplication(bundleIdentifier: selectedApp.bundleIdentifier, appName: selectedApp.appName)
+        }
     }
 
     private func addApplicationRule() {

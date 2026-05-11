@@ -28,6 +28,15 @@ struct MenuBarControllerSelection: Identifiable, Hashable {
     }
 }
 
+struct MenuBarPinnedApplication: Codable, Equatable, Identifiable, Hashable {
+    var bundleIdentifier: String
+    var appName: String
+
+    var id: String {
+        bundleIdentifier
+    }
+}
+
 struct ControllerConfiguration: Codable, Equatable {
     var identifier: String
     var productName: String?
@@ -133,6 +142,7 @@ final class MenuBarMapperModel: ObservableObject {
     @Published private(set) var accessibilityTrusted: Bool
     @Published private(set) var profiles: [MappingProfile]
     @Published private(set) var appRules: [AppProfileRule]
+    @Published private(set) var pinnedApplications: [MenuBarPinnedApplication]
     @Published private(set) var controllerConfigurations: [ControllerConfiguration]
     @Published private(set) var selectedControllerIdentifier: String?
     @Published private(set) var frontmostApplication: FrontmostApplicationInfo?
@@ -161,10 +171,11 @@ final class MenuBarMapperModel: ObservableObject {
     private static let legacySelectedProfileIDDefaultsKey = "com.elitemapper.phase4.selectedProfileID"
     private static let appRulesDefaultsKey = "com.paddlr.phase4.appRules.v1"
     private static let legacyAppRulesDefaultsKey = "com.elitemapper.phase4.appRules.v1"
+    private static let pinnedApplicationsDefaultsKey = "com.paddlr.phase4.pinnedApplications.v1"
     private static let controllerConfigurationsDefaultsKey = "com.paddlr.phase5.controllerConfigurations.v1"
     private static let legacyControllerConfigurationsDefaultsKey = "com.elitemapper.phase5.controllerConfigurations.v1"
     private static let maxRecentEvents = 40
-    private static let maxObservedApplications = 20
+    private static let maxObservedApplications = 3
     private static let deviceStatusPollInterval: TimeInterval = 3
     private static let debugConsoleLoggingEnabled = MenuBarMapperModel.isEnvironmentFlagEnabled(
         "PADDLR_DEBUG_LOG",
@@ -348,6 +359,7 @@ final class MenuBarMapperModel: ObservableObject {
         let resolvedProfiles = loadedProfiles.isEmpty ? [MappingProfile.defaultProfile] : loadedProfiles
         self.profiles = resolvedProfiles
         self.appRules = Self.loadAppRules(from: defaults)
+        self.pinnedApplications = Self.loadPinnedApplications(from: defaults)
         let loadedControllerConfigurations = Self.loadControllerConfigurations(from: defaults)
         self.controllerConfigurations = loadedControllerConfigurations
         let restoredControllerIdentifier = Self.defaultSelectedControllerIdentifier(from: loadedControllerConfigurations)
@@ -386,6 +398,7 @@ final class MenuBarMapperModel: ObservableObject {
         defaults.set(defaultApplicationOutputEnabled, forKey: Self.defaultApplicationOutputEnabledDefaultsKey)
         persistProfiles()
         persistAppRules()
+        persistPinnedApplications()
         persistControllerConfigurations()
         defaults.set(defaultSelectedProfileID.uuidString, forKey: Self.selectedProfileIDDefaultsKey)
 
@@ -763,6 +776,24 @@ final class MenuBarMapperModel: ObservableObject {
         persistAppRules()
         updateStatusItemState()
         appendEvent("[AppRule] Cleared rule for \(appName ?? bundleIdentifier).")
+    }
+
+    func isApplicationPinned(bundleIdentifier: String) -> Bool {
+        pinnedApplications.contains { $0.bundleIdentifier == bundleIdentifier }
+    }
+
+    func pinApplication(bundleIdentifier: String, appName: String) {
+        pinnedApplications.removeAll { $0.bundleIdentifier == bundleIdentifier }
+        pinnedApplications.append(MenuBarPinnedApplication(bundleIdentifier: bundleIdentifier, appName: appName))
+        pinnedApplications.sort { $0.appName.localizedCaseInsensitiveCompare($1.appName) == .orderedAscending }
+        persistPinnedApplications()
+        appendEvent("[App] Pinned \(appName).")
+    }
+
+    func unpinApplication(bundleIdentifier: String, appName: String? = nil) {
+        pinnedApplications.removeAll { $0.bundleIdentifier == bundleIdentifier }
+        persistPinnedApplications()
+        appendEvent("[App] Unpinned \(appName ?? bundleIdentifier).")
     }
 
     private func startMonitor() {
@@ -1272,6 +1303,15 @@ final class MenuBarMapperModel: ObservableObject {
         }
     }
 
+    private func persistPinnedApplications() {
+        do {
+            let data = try Self.encoder.encode(pinnedApplications)
+            defaults.set(data, forKey: Self.pinnedApplicationsDefaultsKey)
+        } catch {
+            appendEvent("[App] Failed to persist pinned apps: \(error.localizedDescription)")
+        }
+    }
+
     private func persistControllerConfigurations() {
         do {
             let data = try Self.encoder.encode(controllerConfigurations)
@@ -1430,6 +1470,17 @@ final class MenuBarMapperModel: ObservableObject {
         }
 
         return []
+    }
+
+    private static func loadPinnedApplications(from defaults: UserDefaults) -> [MenuBarPinnedApplication] {
+        guard
+            let data = defaults.data(forKey: pinnedApplicationsDefaultsKey),
+            let pinnedApplications = try? decoder.decode([MenuBarPinnedApplication].self, from: data)
+        else {
+            return []
+        }
+
+        return pinnedApplications
     }
 
     private static func loadControllerConfigurations(from defaults: UserDefaults) -> [ControllerConfiguration] {
