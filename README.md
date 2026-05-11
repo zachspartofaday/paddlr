@@ -50,12 +50,18 @@ Paddlr releases include a `.zip` archive containing `Paddlr.app` for users who d
 
 The app bundle is locally signed so macOS can validate its contents, but it is not Apple-notarized. macOS will likely show a warning such as “Paddlr.app can’t be opened because Apple cannot check it for malicious software” or may offer to move it to Trash.
 
-If you trust the release source:
+If you trust the release source, this first-launch flow is expected:
+
+<p align="center">
+  <img src="assets/screenshots/paddlr-gatekeeper-warning.png" alt="macOS Gatekeeper warning for Paddlr" width="320" />
+</p>
 
 1. Unzip the archive and move `Paddlr.app` to Applications if desired.
 2. Try opening `Paddlr.app`.
-3. If macOS blocks it, open **System Settings -> Privacy & Security** and choose **Open Anyway** for Paddlr, then confirm **Open**.
-4. You can also try right-click/control-click -> **Open** on `Paddlr.app`, then confirm **Open** when macOS allows that path.
+3. If macOS shows the warning above, click **Done** first. Do not choose **Move to Trash**.
+4. Open **System Settings -> Privacy & Security**, scroll to **Security**, and click **Open Anyway** for Paddlr.
+5. Confirm **Open** when macOS asks again.
+6. You can also try right-click/control-click -> **Open** on `Paddlr.app`, but the Privacy & Security **Open Anyway** path is usually required for this preview build.
 
 ## Package as a macOS app from source
 
@@ -90,7 +96,7 @@ Open the menu bar panel to configure controller, application, profile, and paddl
 1. **Check status at the top of the panel.**
    - The controller row is green when an Elite paddle device is connected, orange when a controller is detected without usable Elite paddle input, and red when no Elite device is found.
    - Use the retry button next to the controller row if detection needs to be refreshed.
-   - The Accessibility row is green when macOS trusts the launcher for keyboard output. If it says **Accessibility: Needed**, use **Prompt** or grant permission in System Settings.
+   - The Accessibility row is green when macOS trusts the launcher for keyboard output. If it says **Accessibility: Permission Needed**, click **Grant Accessibility Permission** or grant permission in System Settings.
 2. **Use the Keyboard output switch** in the top-right to turn all paddle output on or off without changing mappings.
 3. **Choose a controller** in the Controller section when more than one controller is visible.
    - Use the pencil button to give a controller a friendly name.

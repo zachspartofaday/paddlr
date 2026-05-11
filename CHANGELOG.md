@@ -4,6 +4,21 @@ All notable public-facing changes to Paddlr will be documented in this file.
 
 ## Unreleased
 
+- No unreleased public-facing changes yet.
+
+## 0.1.1 - 2026-05-11
+
+### Added
+
+- Added a Gatekeeper warning screenshot and first-launch approval steps to the README.
+
+### Changed
+
+- Made the Accessibility permission action in the menu bar panel more prominent.
+- Updated the app icon background to match the Part of a Day page background color.
+
+## 0.1.0 - 2026-05-11
+
 ### Added
 
 - Added the Paddlr Swift package and menu bar app for mapping Xbox Elite Series 2 paddles to keyboard output on macOS.
@@ -12,7 +27,6 @@ All notable public-facing changes to Paddlr will be documented in this file.
 - Added a no-dependency self-test with `swift run PaddlrSelfTest`.
 - Added the Paddlr app icon and small public README logo.
 - Added `scripts/release/package_app.sh` for creating `dist/Paddlr.app` and an optional convenience zip archive from source.
-- Made the Accessibility permission action in the menu bar panel more prominent.
 
 ### Changed
 
