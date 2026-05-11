@@ -46,20 +46,20 @@ The app appears as an icon in the macOS menu bar. Click the icon to open the map
 
 ## Download the convenience app
 
-Paddlr releases include an unsigned `.zip` archive containing `Paddlr.app` for users who do not want to build from source.
+Paddlr releases include a `.zip` archive containing `Paddlr.app` for users who do not want to build from source.
 
-Because the app is unsigned, macOS may show a Gatekeeper warning the first time you open it. If you trust the release source, unzip the archive, move `Paddlr.app` to Applications, then use right-click/control-click -> **Open** or the Privacy & Security prompt to approve it.
+The app bundle is locally signed so macOS can validate its contents, but it is not Apple-notarized. macOS may show a Gatekeeper warning the first time you open it. If you trust the release source, unzip the archive, move `Paddlr.app` to Applications, then use right-click/control-click -> **Open** or the Privacy & Security prompt to approve it.
 
 ## Package as a macOS app from source
 
-If you build from source, you can create the same unsigned convenience app bundle locally:
+If you build from source, you can create the same convenience app bundle locally:
 
 ```bash
 scripts/release/package_app.sh --clean --create-zip
 open dist/Paddlr.app
 ```
 
-The script creates `dist/Paddlr.app` and, when requested, a zipped release archive. It embeds the Paddlr app icon and never changes repository visibility.
+The script creates `dist/Paddlr.app` and, when requested, a zipped release archive. It embeds the Paddlr app icon, applies local bundle signing for macOS validation, and never changes repository visibility.
 
 ## Menu bar icon states
 
@@ -117,7 +117,7 @@ Paddlr uses CoreGraphics keyboard events for output. macOS requires Accessibilit
 System Settings -> Privacy & Security -> Accessibility
 ```
 
-If you run with `swift run`, grant Accessibility permission to Terminal or the `swift` host. If you launch `Paddlr.app`, grant Accessibility permission to Paddlr itself. The downloaded convenience app is unsigned, so Gatekeeper approval and Accessibility permission are separate steps.
+If you run with `swift run`, grant Accessibility permission to Terminal or the `swift` host. If you launch `Paddlr.app`, grant Accessibility permission to Paddlr itself. Gatekeeper approval and Accessibility permission are separate steps.
 
 ## Diagnostics
 

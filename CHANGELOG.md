@@ -11,7 +11,7 @@ All notable public-facing changes to Paddlr will be documented in this file.
 - Added diagnostic command-line tools for controller and HID investigation.
 - Added a no-dependency self-test with `swift run PaddlrSelfTest`.
 - Added the Paddlr app icon and small public README logo.
-- Added `scripts/release/package_app.sh` for creating an unsigned `dist/Paddlr.app` and optional convenience zip archive from source.
+- Added `scripts/release/package_app.sh` for creating `dist/Paddlr.app` and an optional convenience zip archive from source.
 
 ### Changed
 

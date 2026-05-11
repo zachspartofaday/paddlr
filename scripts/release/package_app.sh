@@ -5,9 +5,8 @@ usage() {
   cat <<'USAGE'
 Usage: scripts/release/package_app.sh [options]
 
-Build and assemble an unsigned dist/Paddlr.app from the SwiftPM Paddlr
-executable. This script is intended for source builds and unsigned
-convenience preview archives.
+Build and assemble dist/Paddlr.app from the SwiftPM Paddlr executable.
+The app bundle is locally signed so macOS can validate its bundle resources.
 
 Options:
   --output-dir <path>        Directory for release artifacts (default: dist)
@@ -18,6 +17,7 @@ Options:
   --skip-build               Reuse an existing .build release executable
   --clean                    Remove the output directory before packaging
   --create-zip               Create dist/Paddlr-<version>.zip after packaging
+  --no-sign                  Skip local bundle signing (not recommended for downloads)
   -h, --help                 Show this help
 
 Examples:
@@ -37,6 +37,7 @@ minimum_macos="15.0"
 skip_build=false
 clean_output=false
 create_zip=false
+sign_bundle=true
 version=""
 build_number=""
 
@@ -114,6 +115,10 @@ while [[ $# -gt 0 ]]; do
       create_zip=true
       shift
       ;;
+    --no-sign)
+      sign_bundle=false
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -187,17 +192,27 @@ fi
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $build_number" "$info_plist"
 /usr/libexec/PlistBuddy -c "Set :LSMinimumSystemVersion $minimum_macos" "$info_plist"
 plutil -lint "$info_plist" >/dev/null
+xattr -cr "$app_path" 2>/dev/null || true
+
+if [[ "$sign_bundle" == true ]]; then
+  codesign --force --sign - "$app_path"
+  codesign --verify --strict --verbose=2 "$app_path"
+fi
 
 if [[ "$create_zip" == true ]]; then
   final_zip="$output_dir/Paddlr-$version.zip"
   rm -f "$final_zip"
   (
     cd "$output_dir"
-    ditto -c -k --sequesterRsrc --keepParent "$bundle_name" "$final_zip"
+    zip -qry -X "$final_zip" "$bundle_name"
   )
   echo "Created archive: $final_zip"
 fi
 
-echo "Created unsigned app bundle: $app_path"
+if [[ "$sign_bundle" == true ]]; then
+  echo "Created locally signed app bundle: $app_path"
+else
+  echo "Created unsigned app bundle: $app_path"
+fi
 echo "Bundle identifier: $bundle_id"
 echo "Version: $version ($build_number)"
