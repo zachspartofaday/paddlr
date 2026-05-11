@@ -798,19 +798,30 @@ struct MappingPanelView: View {
     }
 
     private var accessibilityStatusRow: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(model.accessibilityTrusted ? Color.green : Color.red)
-                .frame(width: 9, height: 9)
-            Text(model.accessibilityTrusted ? "Accessibility: Trusted" : "Accessibility: Needed")
-                .font(.caption)
-                .foregroundColor(.secondary)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(model.accessibilityTrusted ? Color.green : Color.red)
+                    .frame(width: 9, height: 9)
+                Text(model.accessibilityTrusted ? "Accessibility: Trusted" : "Accessibility: Permission Needed")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
             if !model.accessibilityTrusted {
-                Button("Prompt") {
+                Button {
                     model.refreshAccessibilityTrust(prompt: true)
+                } label: {
+                    Label("Grant Accessibility Permission", systemImage: "hand.raised.fill")
                 }
-                .font(.caption)
-                .buttonStyle(.borderless)
+                .font(.caption.weight(.semibold))
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .help("Open the macOS Accessibility permission prompt for Paddlr keyboard output")
+
+                Text("Required for paddle keyboard output.")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
             }
         }
     }

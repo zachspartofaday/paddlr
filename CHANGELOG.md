@@ -12,6 +12,7 @@ All notable public-facing changes to Paddlr will be documented in this file.
 - Added a no-dependency self-test with `swift run PaddlrSelfTest`.
 - Added the Paddlr app icon and small public README logo.
 - Added `scripts/release/package_app.sh` for creating `dist/Paddlr.app` and an optional convenience zip archive from source.
+- Made the Accessibility permission action in the menu bar panel more prominent.
 
 ### Changed
 

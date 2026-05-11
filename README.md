@@ -48,7 +48,14 @@ The app appears as an icon in the macOS menu bar. Click the icon to open the map
 
 Paddlr releases include a `.zip` archive containing `Paddlr.app` for users who do not want to build from source.
 
-The app bundle is locally signed so macOS can validate its contents, but it is not Apple-notarized. macOS may show a Gatekeeper warning the first time you open it. If you trust the release source, unzip the archive, move `Paddlr.app` to Applications, then use right-click/control-click -> **Open** or the Privacy & Security prompt to approve it.
+The app bundle is locally signed so macOS can validate its contents, but it is not Apple-notarized. macOS will likely show a warning such as “Paddlr.app can’t be opened because Apple cannot check it for malicious software” or may offer to move it to Trash.
+
+If you trust the release source:
+
+1. Unzip the archive and move `Paddlr.app` to Applications if desired.
+2. Try opening `Paddlr.app`.
+3. If macOS blocks it, open **System Settings -> Privacy & Security** and choose **Open Anyway** for Paddlr, then confirm **Open**.
+4. You can also try right-click/control-click -> **Open** on `Paddlr.app`, then confirm **Open** when macOS allows that path.
 
 ## Package as a macOS app from source
 
@@ -118,6 +125,8 @@ System Settings -> Privacy & Security -> Accessibility
 ```
 
 If you run with `swift run`, grant Accessibility permission to Terminal or the `swift` host. If you launch `Paddlr.app`, grant Accessibility permission to Paddlr itself. Gatekeeper approval and Accessibility permission are separate steps.
+
+When the menu bar panel says **Accessibility: Permission Needed**, click **Grant Accessibility Permission** in Paddlr, then approve Paddlr in System Settings. Keyboard output will not work until Accessibility permission is granted.
 
 ## Diagnostics
 
