@@ -44,9 +44,9 @@ The app appears as an icon in the macOS menu bar. Click the icon to open the map
 
 Paddlr's menu bar icon shows two pieces of status at once:
 
-![Paddlr menu bar icon state examples](assets/screenshots/paddlr-menu-bar-states.svg)
+![Paddlr menu bar icon state examples](assets/screenshots/paddlr-menu-bar-states.png)
 
-The actual icons are rendered by macOS from SF Symbols (`gamecontroller.circle.fill` and `gamecontroller.circle`), so the accent color follows your system accent color. The examples above are enlarged for readability.
+The actual icons are rendered by macOS from SF Symbols (`gamecontroller.circle.fill` and `gamecontroller.circle`), so the accent color follows your system accent color. The examples above use enlarged menu bar captures for readability.
 
 | Icon state | Meaning |
 | --- | --- |
