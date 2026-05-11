@@ -1353,11 +1353,14 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     private static func loadProfiles(from defaults: UserDefaults) -> [MappingProfile] {
-        if
-            let data = dataDefault(from: defaults, key: profilesDefaultsKey, legacyKey: legacyProfilesDefaultsKey),
-            let decodedProfiles = try? decoder.decode([MappingProfile].self, from: data),
-            !decodedProfiles.isEmpty
-        {
+        for data in dataDefaults(from: defaults, key: profilesDefaultsKey, legacyKey: legacyProfilesDefaultsKey) {
+            guard
+                let decodedProfiles = try? decoder.decode([MappingProfile].self, from: data),
+                !decodedProfiles.isEmpty
+            else {
+                continue
+            }
+
             return normalizeDefaultProfileName(
                 decodedProfiles.map { MappingProfile(id: $0.id, name: $0.name, actions: $0.actions) }
             )
@@ -1404,29 +1407,27 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     private static func loadAppRules(from defaults: UserDefaults) -> [AppProfileRule] {
-        guard
-            let data = dataDefault(from: defaults, key: appRulesDefaultsKey, legacyKey: legacyAppRulesDefaultsKey),
-            let rules = try? decoder.decode([AppProfileRule].self, from: data)
-        else {
-            return []
+        for data in dataDefaults(from: defaults, key: appRulesDefaultsKey, legacyKey: legacyAppRulesDefaultsKey) {
+            if let rules = try? decoder.decode([AppProfileRule].self, from: data) {
+                return rules
+            }
         }
 
-        return rules
+        return []
     }
 
     private static func loadControllerConfigurations(from defaults: UserDefaults) -> [ControllerConfiguration] {
-        guard
-            let data = dataDefault(
-                from: defaults,
-                key: controllerConfigurationsDefaultsKey,
-                legacyKey: legacyControllerConfigurationsDefaultsKey
-            ),
-            let configurations = try? decoder.decode([ControllerConfiguration].self, from: data)
-        else {
-            return []
+        for data in dataDefaults(
+            from: defaults,
+            key: controllerConfigurationsDefaultsKey,
+            legacyKey: legacyControllerConfigurationsDefaultsKey
+        ) {
+            if let configurations = try? decoder.decode([ControllerConfiguration].self, from: data) {
+                return configurations
+            }
         }
 
-        return configurations
+        return []
     }
 
     private static func defaultSelectedControllerIdentifier(from configurations: [ControllerConfiguration]) -> String? {
@@ -1458,8 +1459,18 @@ final class MenuBarMapperModel: ObservableObject {
         "\(legacyMappingDefaultsPrefix)\(paddle.rawValue)"
     }
 
-    private static func dataDefault(from defaults: UserDefaults, key: String, legacyKey: String) -> Data? {
-        defaults.data(forKey: key) ?? defaults.data(forKey: legacyKey)
+    private static func dataDefaults(from defaults: UserDefaults, key: String, legacyKey: String) -> [Data] {
+        var values: [Data] = []
+
+        if let data = defaults.data(forKey: key) {
+            values.append(data)
+        }
+
+        if let legacyData = defaults.data(forKey: legacyKey), !values.contains(legacyData) {
+            values.append(legacyData)
+        }
+
+        return values
     }
 
     private static func stringDefault(from defaults: UserDefaults, key: String, legacyKey: String) -> String? {
