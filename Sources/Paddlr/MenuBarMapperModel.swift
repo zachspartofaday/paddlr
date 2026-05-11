@@ -339,11 +339,11 @@ final class MenuBarMapperModel: ObservableObject {
         let restoredControllerIdentifier = Self.defaultSelectedControllerIdentifier(from: loadedControllerConfigurations)
         self.selectedControllerIdentifier = restoredControllerIdentifier
 
-        let savedSelectedProfileID = Self.stringDefault(
+        let savedSelectedProfileID = Self.stringDefaults(
             from: defaults,
             key: Self.selectedProfileIDDefaultsKey,
             legacyKey: Self.legacySelectedProfileIDDefaultsKey
-        ).flatMap(UUID.init(uuidString:))
+        ).compactMap(UUID.init(uuidString:)).first
         let fallbackSelectedProfileID = resolvedProfiles.first?.id ?? MappingProfile.defaultProfile.id
         let initialSelectedProfileID = savedSelectedProfileID.flatMap { savedID in
             resolvedProfiles.contains(where: { $0.id == savedID }) ? savedID : nil
@@ -1472,14 +1472,11 @@ final class MenuBarMapperModel: ObservableObject {
         var mappings: [Paddle: SyntheticKey] = [:]
 
         for paddle in Paddle.allCases {
-            guard
-                let rawValue = stringDefault(
-                    from: defaults,
-                    key: mappingDefaultsKey(for: paddle),
-                    legacyKey: legacyMappingDefaultsKey(for: paddle)
-                ),
-                let key = SyntheticKey(rawValue: rawValue)
-            else {
+            guard let key = stringDefaults(
+                from: defaults,
+                key: mappingDefaultsKey(for: paddle),
+                legacyKey: legacyMappingDefaultsKey(for: paddle)
+            ).compactMap(SyntheticKey.init(rawValue:)).first else {
                 continue
             }
 
@@ -1551,8 +1548,18 @@ final class MenuBarMapperModel: ObservableObject {
         return values
     }
 
-    private static func stringDefault(from defaults: UserDefaults, key: String, legacyKey: String) -> String? {
-        defaults.string(forKey: key) ?? defaults.string(forKey: legacyKey)
+    private static func stringDefaults(from defaults: UserDefaults, key: String, legacyKey: String) -> [String] {
+        var values: [String] = []
+
+        if let value = defaults.string(forKey: key) {
+            values.append(value)
+        }
+
+        if let legacyValue = defaults.string(forKey: legacyKey), !values.contains(legacyValue) {
+            values.append(legacyValue)
+        }
+
+        return values
     }
 
     private static func boolDefault(from defaults: UserDefaults, key: String, legacyKey: String) -> Bool? {
