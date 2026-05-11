@@ -25,6 +25,7 @@ Profiles 1-3 can emit the controller's firmware-mapped buttons in addition to pa
 | Game/app | Status | Notes |
 |---|---|---|
 | Cult of the Lamb | Known glyph-switching behavior | The game dynamically switches visible input prompts based on the most recent input method. Pressing paddles mapped to keyboard keys can temporarily show keyboard prompts, while normal Xbox controller buttons can switch prompts back to Xbox glyphs. |
+| World of Warcraft with ConsolePort | Known dual-input behavior | ConsolePort can detect Elite paddles natively. If the paddles are also mapped to keyboard binds and Paddlr is enabled for World of Warcraft, the game/add-on can receive both the native paddle input and Paddlr's keyboard output. Disable Paddlr for World of Warcraft or avoid duplicate binds when using ConsolePort's native paddle support. |
 
 ## General gameplay notes
 
@@ -32,6 +33,7 @@ Profiles 1-3 can emit the controller's firmware-mapped buttons in addition to pa
 - Paddlr does not suppress native controller input; it adds keyboard output when paddle input is detected.
 - Games that listen directly to controller input may still see the controller's own signals.
 - Games with dynamic input-method detection may switch visible prompts between keyboard/mouse and controller glyphs while you play.
+- Games or add-ons that natively detect Elite paddles can receive dual inputs if Paddlr is also enabled and mapping those paddles to keyboard binds.
 - Xbox Wireless Adapter support is not expected on macOS.
 
 ## Reporting compatibility results
