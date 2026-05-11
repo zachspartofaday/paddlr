@@ -7,6 +7,7 @@ All notable public-facing changes to Paddlr will be documented in this file.
 ### Changed
 
 - Reorganized the README around a Quick start flow before detailed UI/reference sections.
+- Split the Gatekeeper first-launch and **Open Anyway** confirmation screenshots into separate README steps.
 
 ## 0.1.1 - 2026-05-11
 

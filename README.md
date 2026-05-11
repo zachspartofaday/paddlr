@@ -37,15 +37,21 @@ The app bundle is locally signed so macOS can validate its contents, but it is n
 
 If you trust the release source, this first-launch flow is expected:
 
-<p align="center">
-  <img src="assets/screenshots/paddlr-gatekeeper-warning.png" alt="macOS Gatekeeper warning for Paddlr" width="320" />
-</p>
-
 1. Unzip the archive and move `Paddlr.app` to Applications if desired.
 2. Try opening `Paddlr.app`.
-3. If macOS shows the warning above, click **Done** first. Do not choose **Move to Trash**.
+3. macOS will likely show **“Paddlr” Not Opened** with **Move to Trash** and **Done**. Click **Done** first. Do not choose **Move to Trash**.
+
+   <p align="center">
+     <img src="assets/screenshots/paddlr-gatekeeper-first-launch.png" alt="macOS first-launch warning for Paddlr" width="320" />
+   </p>
+
 4. Open **System Settings -> Privacy & Security**, scroll to **Security**, and click **Open Anyway** for Paddlr.
-5. Confirm **Open** when macOS asks again.
+5. macOS will ask for confirmation with **Open Anyway** available. Click **Open Anyway**.
+
+   <p align="center">
+     <img src="assets/screenshots/paddlr-gatekeeper-open-anyway.png" alt="macOS Open Anyway confirmation for Paddlr" width="320" />
+   </p>
+
 6. You can also try right-click/control-click -> **Open** on `Paddlr.app`, but the Privacy & Security **Open Anyway** path is usually required for this preview build.
 
 ### 2. Grant Accessibility permission
