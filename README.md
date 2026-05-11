@@ -27,53 +27,6 @@ It is currently focused on safe keyboard output: each paddle can send a configur
   - Paddle 3 -> F15
   - Paddle 4 -> F16
 
-## Build and run from source
-
-Build and run the self-test:
-
-```bash
-swift build
-swift run PaddlrSelfTest
-```
-
-Run the menu bar app directly from SwiftPM:
-
-```bash
-swift run Paddlr
-```
-
-The app appears as an icon in the macOS menu bar. Click the icon to open the mapping panel.
-
-## Download the convenience app
-
-Paddlr releases include a `.zip` archive containing `Paddlr.app` for users who do not want to build from source.
-
-The app bundle is locally signed so macOS can validate its contents, but it is not Apple-notarized. macOS will likely show a warning such as “Paddlr.app can’t be opened because Apple cannot check it for malicious software” or may offer to move it to Trash.
-
-If you trust the release source, this first-launch flow is expected:
-
-<p align="center">
-  <img src="assets/screenshots/paddlr-gatekeeper-warning.png" alt="macOS Gatekeeper warning for Paddlr" width="320" />
-</p>
-
-1. Unzip the archive and move `Paddlr.app` to Applications if desired.
-2. Try opening `Paddlr.app`.
-3. If macOS shows the warning above, click **Done** first. Do not choose **Move to Trash**.
-4. Open **System Settings -> Privacy & Security**, scroll to **Security**, and click **Open Anyway** for Paddlr.
-5. Confirm **Open** when macOS asks again.
-6. You can also try right-click/control-click -> **Open** on `Paddlr.app`, but the Privacy & Security **Open Anyway** path is usually required for this preview build.
-
-## Package as a macOS app from source
-
-If you build from source, you can create the same convenience app bundle locally:
-
-```bash
-scripts/release/package_app.sh --clean --create-zip
-open dist/Paddlr.app
-```
-
-The script creates `dist/Paddlr.app` and, when requested, a zipped release archive. It embeds the Paddlr app icon, applies local bundle signing for macOS validation, and never changes repository visibility.
-
 ## Menu bar icon states
 
 Paddlr combines output state and controller status in one menu bar icon:
@@ -133,6 +86,53 @@ System Settings -> Privacy & Security -> Accessibility
 If you run with `swift run`, grant Accessibility permission to Terminal or the `swift` host. If you launch `Paddlr.app`, grant Accessibility permission to Paddlr itself. Gatekeeper approval and Accessibility permission are separate steps.
 
 When the menu bar panel says **Accessibility: Permission Needed**, click **Grant Accessibility Permission** in Paddlr, then approve Paddlr in System Settings. Keyboard output will not work until Accessibility permission is granted.
+
+## Build and run from source
+
+Build and run the self-test:
+
+```bash
+swift build
+swift run PaddlrSelfTest
+```
+
+Run the menu bar app directly from SwiftPM:
+
+```bash
+swift run Paddlr
+```
+
+The app appears as an icon in the macOS menu bar. Click the icon to open the mapping panel.
+
+## Download the convenience app
+
+Paddlr releases include a `.zip` archive containing `Paddlr.app` for users who do not want to build from source.
+
+The app bundle is locally signed so macOS can validate its contents, but it is not Apple-notarized. macOS will likely show a warning such as “Paddlr.app can’t be opened because Apple cannot check it for malicious software” or may offer to move it to Trash.
+
+If you trust the release source, this first-launch flow is expected:
+
+<p align="center">
+  <img src="assets/screenshots/paddlr-gatekeeper-warning.png" alt="macOS Gatekeeper warning for Paddlr" width="320" />
+</p>
+
+1. Unzip the archive and move `Paddlr.app` to Applications if desired.
+2. Try opening `Paddlr.app`.
+3. If macOS shows the warning above, click **Done** first. Do not choose **Move to Trash**.
+4. Open **System Settings -> Privacy & Security**, scroll to **Security**, and click **Open Anyway** for Paddlr.
+5. Confirm **Open** when macOS asks again.
+6. You can also try right-click/control-click -> **Open** on `Paddlr.app`, but the Privacy & Security **Open Anyway** path is usually required for this preview build.
+
+## Package as a macOS app from source
+
+If you build from source, you can create the same convenience app bundle locally:
+
+```bash
+scripts/release/package_app.sh --clean --create-zip
+open dist/Paddlr.app
+```
+
+The script creates `dist/Paddlr.app` and, when requested, a zipped release archive. It embeds the Paddlr app icon, applies local bundle signing for macOS validation, and never changes repository visibility.
 
 ## Diagnostics
 
