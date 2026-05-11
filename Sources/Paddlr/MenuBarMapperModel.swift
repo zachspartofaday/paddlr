@@ -233,16 +233,11 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     var effectiveProfile: MappingProfile {
-        guard let activeAppRule else {
-            return selectedProfile
-        }
-
-        switch activeAppRule.action {
-        case .useProfile(let profileID):
-            return profiles.first(where: { $0.id == profileID }) ?? selectedProfile
-        case .disableOutput:
-            return selectedProfile
-        }
+        let profileID = profileIDForApplication(
+            bundleIdentifier: frontmostApplication?.ruleKey,
+            controllerIdentifier: selectedControllerIdentifier
+        )
+        return profiles.first(where: { $0.id == profileID }) ?? selectedProfile
     }
 
     var effectiveProfileName: String {
@@ -763,9 +758,11 @@ final class MenuBarMapperModel: ObservableObject {
 
     func clearAppRule(bundleIdentifier: String, appName: String? = nil, controllerIdentifier: String? = nil) {
         releasePostedKeys(reason: "app rule cleared")
-        appRules.removeAll {
+        var rules = appRules
+        rules.removeAll {
             $0.bundleIdentifier == bundleIdentifier && $0.controllerIdentifier == controllerIdentifier
         }
+        appRules = rules
         persistAppRules()
         updateStatusItemState()
         appendEvent("[AppRule] Cleared rule for \(appName ?? bundleIdentifier).")
@@ -776,15 +773,19 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     func pinApplication(bundleIdentifier: String, appName: String) {
-        pinnedApplications.removeAll { $0.bundleIdentifier == bundleIdentifier }
-        pinnedApplications.append(MenuBarPinnedApplication(bundleIdentifier: bundleIdentifier, appName: appName))
-        pinnedApplications.sort { $0.appName.localizedCaseInsensitiveCompare($1.appName) == .orderedAscending }
+        var applications = pinnedApplications
+        applications.removeAll { $0.bundleIdentifier == bundleIdentifier }
+        applications.append(MenuBarPinnedApplication(bundleIdentifier: bundleIdentifier, appName: appName))
+        applications.sort { $0.appName.localizedCaseInsensitiveCompare($1.appName) == .orderedAscending }
+        pinnedApplications = applications
         persistPinnedApplications()
         appendEvent("[App] Pinned \(appName).")
     }
 
     func unpinApplication(bundleIdentifier: String, appName: String? = nil) {
-        pinnedApplications.removeAll { $0.bundleIdentifier == bundleIdentifier }
+        var applications = pinnedApplications
+        applications.removeAll { $0.bundleIdentifier == bundleIdentifier }
+        pinnedApplications = applications
         persistPinnedApplications()
         appendEvent("[App] Unpinned \(appName ?? bundleIdentifier).")
     }
@@ -1271,11 +1272,12 @@ final class MenuBarMapperModel: ObservableObject {
 
     private func setRule(_ rule: AppProfileRule) {
         releasePostedKeys(reason: "app rule changed")
-        appRules.removeAll {
+        var rules = appRules
+        rules.removeAll {
             $0.bundleIdentifier == rule.bundleIdentifier && $0.controllerIdentifier == rule.controllerIdentifier
         }
-        appRules.append(rule)
-        appRules.sort {
+        rules.append(rule)
+        rules.sort {
             let appOrder = $0.appName.localizedCaseInsensitiveCompare($1.appName)
             if appOrder != .orderedSame {
                 return appOrder == .orderedAscending
@@ -1283,6 +1285,7 @@ final class MenuBarMapperModel: ObservableObject {
 
             return ($0.controllerIdentifier ?? "") < ($1.controllerIdentifier ?? "")
         }
+        appRules = rules
         persistAppRules()
         updateStatusItemState()
         appendEvent("[AppRule] \(rule.appName): \(rule.action.displayName(profileNameForID: profileName(for:))).")

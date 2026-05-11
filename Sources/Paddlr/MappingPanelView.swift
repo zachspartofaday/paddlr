@@ -279,12 +279,12 @@ struct MappingPanelView: View {
             return diagnosticProfileDetailText
         }
 
-        guard selectedApp?.isDefault != true,
-              model.effectiveProfile.id != model.selectedProfileID else {
+        guard let selectedScopeEffectiveProfileName,
+              selectedScopeEffectiveProfileID != model.selectedProfileID else {
             return nil
         }
 
-        return "Effective profile: \(model.effectiveProfileName)"
+        return "Effective profile: \(selectedScopeEffectiveProfileName)"
     }
 
     private var diagnosticProfileDetailText: String {
@@ -398,6 +398,25 @@ struct MappingPanelView: View {
         }
 
         return model.isApplicationPinned(bundleIdentifier: selectedApp.bundleIdentifier)
+    }
+
+    private var selectedScopeEffectiveProfileID: UUID? {
+        guard let selectedApp else {
+            return nil
+        }
+
+        return model.profileIDForApplication(
+            bundleIdentifier: selectedApp.isDefault ? nil : selectedApp.bundleIdentifier,
+            controllerIdentifier: model.selectedControllerIdentifier
+        )
+    }
+
+    private var selectedScopeEffectiveProfileName: String? {
+        guard let selectedScopeEffectiveProfileID else {
+            return nil
+        }
+
+        return model.profileName(for: selectedScopeEffectiveProfileID)
     }
 
     private var selectedApplicationOutputEnabled: Bool {
