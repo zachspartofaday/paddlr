@@ -748,6 +748,10 @@ struct MappingPanelView: View {
     }
 
     private var controllerStatusColor: Color {
+        if !model.inputMonitoringTrusted {
+            return .red
+        }
+
         if model.paddleDeviceStatus.isConnected {
             return .green
         }
@@ -760,6 +764,10 @@ struct MappingPanelView: View {
     }
 
     private var controllerStatusText: String {
+        if !model.inputMonitoringTrusted {
+            return "Controller input: Permission Needed"
+        }
+
         if model.paddleDeviceStatus.isConnected {
             let deviceName = model.paddleDeviceStatus.deviceName ?? "Unknown Device"
             if model.paddleDeviceStatus.connectedDeviceCount > 1 {
@@ -820,7 +828,7 @@ struct MappingPanelView: View {
             buttonTitle: "Grant Input Monitoring Permission",
             systemImage: "keyboard",
             helpText: "Open the macOS Input Monitoring permission prompt for controller input",
-            detailText: "May be required for Elite paddle input."
+            detailText: "Required before Paddlr starts controller detection."
         ) {
             model.refreshInputMonitoringTrust(prompt: true)
         }

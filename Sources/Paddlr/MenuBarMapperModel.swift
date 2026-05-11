@@ -150,7 +150,7 @@ final class MenuBarMapperModel: ObservableObject {
     @Published private(set) var observedApplications: [FrontmostApplicationInfo] = []
     @Published private(set) var capturingPaddle: Paddle?
     @Published private(set) var paddleDeviceStatus = HIDPaddleDeviceStatus(isConnected: false, deviceName: nil)
-    @Published private(set) var monitorStatus = "Starting raw IOHID monitor..."
+    @Published private(set) var monitorStatus = "Controller input monitor not started."
     @Published private(set) var pressedPaddles: Set<Paddle> = []
     @Published private(set) var recentEvents: [String] = []
     @Published private(set) var mappingChangeRevision = 0
@@ -613,6 +613,13 @@ final class MenuBarMapperModel: ObservableObject {
     func refreshInputMonitoringTrust(prompt: Bool) {
         inputMonitoringTrusted = HIDPaddleMonitor.isInputMonitoringTrusted(prompt: prompt)
         appendEvent("[InputMonitoring] Permission is \(inputMonitoringTrusted ? "trusted" : "not trusted").")
+
+        if inputMonitoringTrusted {
+            startMonitor()
+        } else if prompt {
+            monitorStatus = "Input Monitoring permission needed."
+            appendEvent("[InputMonitoring] Approve Paddlr in System Settings, then click the button again if needed.")
+        }
     }
 
     func assignFrontmostAppToSelectedProfile() {
@@ -799,6 +806,25 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     private func startMonitor() {
+        inputMonitoringTrusted = HIDPaddleMonitor.isInputMonitoringTrusted(prompt: false)
+        guard inputMonitoringTrusted else {
+            monitor?.stop()
+            monitor = nil
+            clearPressedPaddles()
+            paddleDeviceStatus = HIDPaddleDeviceStatus(isConnected: false, deviceName: nil)
+            monitorStatus = "Input Monitoring permission needed."
+            appendEvent("[IOHID] Waiting for Input Monitoring permission before starting controller detection.")
+            updateStatusItemState()
+            return
+        }
+
+        guard monitor == nil else {
+            monitor?.pollDeviceStatus()
+            return
+        }
+
+        monitorStatus = "Starting raw IOHID monitor..."
+
         let monitor = HIDPaddleMonitor(
             log: { [weak self] message in
                 self?.recordEventFromAnyThread("[IOHID] \(message)")

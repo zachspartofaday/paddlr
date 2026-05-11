@@ -6,6 +6,14 @@ All notable public-facing changes to Paddlr will be documented in this file.
 
 - No unreleased public-facing changes yet.
 
+## 0.1.4 - 2026-05-11
+
+### Changed
+
+- Changed Input Monitoring from an automatic launch prompt to an explicit **Grant Input Monitoring Permission** button flow, matching the Accessibility permission flow.
+- Paddlr now waits to start raw controller detection until Input Monitoring permission is already trusted.
+- Updated controller status copy to show that controller input is waiting on permission.
+
 ## 0.1.3 - 2026-05-11
 
 ### Changed

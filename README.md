@@ -72,7 +72,7 @@ Move `Paddlr.app` to its final location, such as Applications, before granting p
 
 When the menu bar panel says **Accessibility: Permission Needed**, click **Grant Accessibility Permission** in Paddlr, then approve Paddlr in System Settings. Keyboard output will not work until Accessibility permission is granted.
 
-When the menu bar panel says **Input Monitoring: Permission Needed**, click **Grant Input Monitoring Permission** in Paddlr, then approve Paddlr in System Settings. Paddle input may not be detected until Input Monitoring permission is granted.
+When the menu bar panel says **Input Monitoring: Permission Needed**, click **Grant Input Monitoring Permission** in Paddlr, then approve Paddlr in System Settings. Paddlr waits to start controller detection until this permission is granted, so paddle input will not be detected before this step.
 
 When updating from an earlier preview build, macOS may ask for permissions again. If Paddlr still appears untrusted after an update or move, remove the old Paddlr entry from Accessibility/Input Monitoring, add the current `Paddlr.app` from its final location, and enable it.
 
@@ -94,7 +94,7 @@ Open the menu bar panel to configure controller, application, profile, and paddl
    - The controller row is green when an Elite paddle device is connected, orange when a controller is detected without usable Elite paddle input, and red when no Elite device is found.
    - Use the retry button next to the controller row if detection needs to be refreshed.
    - The Accessibility row is green when macOS trusts the launcher for keyboard output. If it says **Accessibility: Permission Needed**, click **Grant Accessibility Permission** or grant permission in System Settings.
-   - The Input Monitoring row is green when macOS trusts Paddlr for raw controller input. If it says **Input Monitoring: Permission Needed**, click **Grant Input Monitoring Permission** or grant permission in System Settings.
+   - The Input Monitoring row is green when macOS trusts Paddlr for raw controller input. If it says **Input Monitoring: Permission Needed**, click **Grant Input Monitoring Permission** or grant permission in System Settings. Paddlr will not start controller detection until this permission is granted.
 2. **Use the Keyboard output switch** in the top-right to turn all paddle output on or off without changing mappings.
 3. **Choose a controller** in the Controller section when more than one controller is visible.
    - Use the pencil button to give a controller a friendly name.
