@@ -92,6 +92,7 @@ struct MappingPanelView: View {
         }
         .onAppear {
             selectDefaultAppIfNeeded()
+            syncProfileForSelectedApplication()
         }
         .onChange(of: model.frontmostApplication?.ruleKey) { _ in
             selectDefaultAppIfNeeded()
