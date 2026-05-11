@@ -656,8 +656,8 @@ final class MenuBarMapperModel: ObservableObject {
 
         refreshPermissionTrustAfterReturn()
 
-        guard permissionRequestObservedApplicationResignActive else {
-            clearStalePermissionRestartPromptIfNeeded()
+        let elapsedSinceRequest = pendingPermissionRestartPromptArmedAt.map { Date().timeIntervalSince($0) } ?? 0
+        guard permissionRequestObservedApplicationResignActive || elapsedSinceRequest > 2 else {
             return nil
         }
 
@@ -856,17 +856,6 @@ final class MenuBarMapperModel: ObservableObject {
     private func armPermissionRestartPrompt(for kind: PermissionRestartPromptKind) {
         pendingPermissionRestartPromptKind = kind
         pendingPermissionRestartPromptArmedAt = Date()
-        permissionRequestObservedApplicationResignActive = false
-    }
-
-    private func clearStalePermissionRestartPromptIfNeeded() {
-        guard let armedAt = pendingPermissionRestartPromptArmedAt,
-              Date().timeIntervalSince(armedAt) > 2 else {
-            return
-        }
-
-        pendingPermissionRestartPromptKind = nil
-        pendingPermissionRestartPromptArmedAt = nil
         permissionRequestObservedApplicationResignActive = false
     }
 

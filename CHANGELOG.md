@@ -6,6 +6,12 @@ All notable public-facing changes to Paddlr will be documented in this file.
 
 - No unreleased public-facing changes yet.
 
+## 0.1.7 - 2026-05-11
+
+### Changed
+
+- Made the post-permission restart prompt more reliable for menu bar/agent app behavior by watching macOS frontmost-app changes and checking again when the Paddlr popover is reopened.
+
 ## 0.1.6 - 2026-05-11
 
 ### Changed

@@ -83,8 +83,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private let showsDiagnosticHelperText: Bool
     private var statusItem: NSStatusItem?
     private var statusItemStateCancellable: AnyCancellable?
+    private var workspaceActivationObserver: Any?
     private var statusItemImageCache: [MenuBarStatusItemState: NSImage] = [:]
     private var latestContentSize = PopoverLayout.fallbackSize
+    private var isShowingPermissionRestartPrompt = false
 
     init(showsDiagnosticHelperText: Bool) {
         self.showsDiagnosticHelperText = showsDiagnosticHelperText
@@ -123,9 +125,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 self?.resizePopover(to: size)
             }
         )
+
+        workspaceActivationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            self?.handleWorkspaceActivation(notification)
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        if let workspaceActivationObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(workspaceActivationObserver)
+        }
         model.shutdown()
     }
 
@@ -134,11 +147,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
-        guard let prompt = model.consumePermissionRestartPromptAfterActivation() else {
-            return
-        }
-
-        showPermissionRestartPrompt(prompt)
+        showPendingPermissionRestartPromptIfNeeded()
     }
 
     func popoverDidClose(_ notification: Notification) {
@@ -157,6 +166,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     @objc private func quitApplication(_ sender: AnyObject?) {
         NSApplication.shared.terminate(sender)
+    }
+
+    private func handleWorkspaceActivation(_ notification: Notification) {
+        guard let activatedApplication = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else {
+            return
+        }
+
+        if activatedApplication.processIdentifier == ProcessInfo.processInfo.processIdentifier {
+            showPendingPermissionRestartPromptIfNeeded()
+        } else {
+            model.noteApplicationDidResignActive()
+        }
+    }
+
+    private func showPendingPermissionRestartPromptIfNeeded() {
+        guard !isShowingPermissionRestartPrompt,
+              let prompt = model.consumePermissionRestartPromptAfterActivation() else {
+            return
+        }
+
+        isShowingPermissionRestartPrompt = true
+        showPermissionRestartPrompt(prompt)
+        isShowingPermissionRestartPrompt = false
     }
 
     private func showPermissionRestartPrompt(_ prompt: PermissionRestartPrompt) {
@@ -254,6 +286,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         popover.contentSize = boundedPopoverSize(latestContentSize, for: button)
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         popover.contentViewController?.view.window?.makeKey()
+
+        DispatchQueue.main.async { [weak self] in
+            self?.showPendingPermissionRestartPromptIfNeeded()
+        }
     }
 
     private func refreshContentSizeFromFittingView(for button: NSStatusBarButton?) {
