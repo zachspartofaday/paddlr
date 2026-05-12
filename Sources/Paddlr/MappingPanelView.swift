@@ -821,14 +821,20 @@ struct MappingPanelView: View {
     }
 
     private var controllerInputAccessStatusRow: some View {
-        permissionStatusRow(
+        let isRequestEnabled = model.accessibilityTrusted
+        return permissionStatusRow(
             isTrusted: model.inputMonitoringTrusted,
             trustedText: "Controller Input Access: Ready",
             neededText: "Controller Input Access: Permission Needed",
             buttonTitle: "Grant Controller Input Access",
             systemImage: "keyboard",
-            helpText: "Open the macOS permission prompt for raw controller input",
-            detailText: "Required before Paddlr starts controller detection."
+            helpText: isRequestEnabled
+                ? "Open the macOS permission prompt for raw controller input"
+                : "Grant Accessibility first; Paddlr will enable this button if controller input access is still needed",
+            detailText: isRequestEnabled
+                ? "Required before Paddlr starts controller detection."
+                : "Grant Accessibility first. This button becomes available only if controller input access is still needed afterward.",
+            isButtonEnabled: isRequestEnabled
         ) {
             model.refreshInputMonitoringTrust(prompt: true)
         }
@@ -842,6 +848,7 @@ struct MappingPanelView: View {
         systemImage: String,
         helpText: String,
         detailText: String,
+        isButtonEnabled: Bool = true,
         action: @escaping () -> Void
     ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -861,6 +868,7 @@ struct MappingPanelView: View {
                 .font(.caption.weight(.semibold))
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
+                .disabled(!isButtonEnabled)
                 .help(helpText)
 
                 Text(detailText)

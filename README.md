@@ -72,7 +72,7 @@ Move `Paddlr.app` to its final location, such as Applications, before granting p
 
 When the menu bar panel says **Accessibility: Permission Needed**, click **Grant Accessibility Permission** in Paddlr, then approve Paddlr in System Settings. Keyboard output will not work until Accessibility permission is granted.
 
-When the menu bar panel says **Controller Input Access: Permission Needed**, click **Grant Controller Input Access** in Paddlr, then approve Paddlr if macOS opens a permission prompt or System Settings. The button requests macOS Input Monitoring/listen-event access and raw HID access; macOS still decides whether to show a prompt or add a separate Input Monitoring entry. Paddlr waits to start controller detection until controller input access is ready, so paddle input will not be detected before this step.
+When the menu bar panel says **Controller Input Access: Permission Needed**, grant Accessibility first. The **Grant Controller Input Access** button stays disabled until Accessibility is trusted. If controller input access is still needed afterward, the button becomes clickable and requests macOS Input Monitoring/listen-event access plus raw HID access. macOS still decides whether to show a prompt or add a separate Input Monitoring entry. Paddlr waits to start controller detection until controller input access is ready, so paddle input will not be detected before this step.
 
 After pressing either permission button and returning to Paddlr, the app may prompt you to restart. Permission changes often apply more reliably after quitting and reopening the app.
 
@@ -98,7 +98,7 @@ Open the menu bar panel to configure controller, application, profile, and paddl
    - The controller row is green when an Elite paddle device is connected, orange when a controller is detected without usable Elite paddle input, and red when no Elite device is found.
    - Use the retry button next to the controller row if detection needs to be refreshed.
    - The Accessibility row is green when macOS trusts the launcher for keyboard output. If it says **Accessibility: Permission Needed**, click **Grant Accessibility Permission** or grant permission in System Settings.
-   - The Controller Input Access row is green when macOS lets Paddlr read raw controller input. If it says **Controller Input Access: Permission Needed**, click **Grant Controller Input Access** or grant permission in System Settings. Paddlr will not start controller detection until this access is ready, and it may ask you to restart after returning to the app.
+   - The Controller Input Access row is green when macOS lets Paddlr read raw controller input. If it says **Controller Input Access: Permission Needed**, grant Accessibility first. The **Grant Controller Input Access** button becomes clickable only if controller input access is still needed afterward. Paddlr will not start controller detection until this access is ready, and it may ask you to restart after returning to the app.
 2. **Use the Keyboard output switch** in the top-right to turn all paddle output on or off without changing mappings.
 3. **Choose a controller** in the Controller section when more than one controller is visible.
    - Use the pencil button to give a controller a friendly name.
