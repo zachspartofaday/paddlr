@@ -6,6 +6,7 @@ All notable public-facing changes to Paddlr will be documented in this file.
 
 - Added native Elite paddle support and per-app Paddlr recommendation columns to the game compatibility table.
 - Documented that the README's two-by-two paddle mapping layout mirrors the controller's physical paddle positions.
+- Added author attribution for Zach Skjaveland / Part of a Day.
 
 ## 0.1.9 - 2026-05-11
 

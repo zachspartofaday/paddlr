@@ -200,6 +200,10 @@ See [Compatibility Notes](COMPATIBILITY.md) for current hardware, controller-pro
 - Games that dynamically switch visible input glyphs may alternate between keyboard and Xbox button prompts when paddles mapped to keyboard keys are pressed. Known examples are tracked in [Compatibility Notes](COMPATIBILITY.md).
 - Xbox Wireless Adapter support is not expected on macOS.
 
+## Author
+
+Created and maintained by Zach Skjaveland / Part of a Day.
+
 ## License
 
 MIT License. See [LICENSE](LICENSE).
