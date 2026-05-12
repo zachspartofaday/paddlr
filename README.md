@@ -115,6 +115,7 @@ Open the menu bar panel to configure controller, application, profile, and paddl
    - Use **+** to create a profile, the pencil to rename it, and **x** to delete a non-default profile.
    - Use the reset button on the default profile to restore P1-P4 to F13-F16.
 6. **Edit paddle mappings** in the Mappings section.
+   - The two-by-two tile layout mirrors the back-paddle positions on the controller: Paddle 3 top-left, Paddle 1 top-right, Paddle 4 bottom-left, and Paddle 2 bottom-right.
    - Use each paddle's dropdown to choose a preset key or disable that paddle.
    - Use **Capture** to press a key and assign it to that paddle.
    - Changed paddle tiles are highlighted until you click **Save** for the selected app/default/controller target.
