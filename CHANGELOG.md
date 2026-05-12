@@ -4,7 +4,7 @@ All notable public-facing changes to Paddlr will be documented in this file.
 
 ## Unreleased
 
-- No unreleased public-facing changes yet.
+- Added native Elite paddle support and per-app Paddlr recommendation columns to the game compatibility table.
 
 ## 0.1.9 - 2026-05-11
 

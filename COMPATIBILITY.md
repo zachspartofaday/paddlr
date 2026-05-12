@@ -34,11 +34,13 @@ Profiles 1-3 can emit the controller's firmware-mapped buttons in addition to pa
 
 ## Game-specific notes
 
-| Game/app | Status | Notes |
-|---|---|---|
-| Cult of the Lamb (Apple Arcade) | Known glyph-switching behavior | The game dynamically switches visible input prompts based on the most recent input method. Pressing paddles mapped to keyboard keys can temporarily show keyboard prompts, while normal Xbox controller buttons can switch prompts back to Xbox glyphs. Steam and other store versions are not tested yet. |
-| Dredge+ (Apple Arcade) | Known glyph-switching behavior | Similar dynamic prompt switching was observed, though less frequently than in Cult of the Lamb. Steam and other store versions are not tested yet. |
-| World of Warcraft with ConsolePort | Known dual-input behavior | ConsolePort can detect Elite paddles natively. If the paddles are also mapped to keyboard binds and Paddlr is enabled for World of Warcraft, the game/add-on can receive both the native paddle input and Paddlr's keyboard output. Disable Paddlr for World of Warcraft or avoid duplicate binds when using ConsolePort's native paddle support. |
+Use the **Recommendation** column when deciding whether to keep Paddlr enabled for a game's per-app scope.
+
+| Game/app | Native Elite paddle support | Observed behavior | Recommendation | Notes |
+|---|---|---|---|---|
+| Cult of the Lamb (Apple Arcade) | Not observed / unconfirmed | Known glyph-switching behavior | Keep Paddlr enabled if you want paddle-to-keyboard binds. Disable per-app only if keyboard/controller glyph switching is too distracting. | The game dynamically switches visible input prompts based on the most recent input method. Pressing paddles mapped to keyboard keys can temporarily show keyboard prompts, while normal Xbox controller buttons can switch prompts back to Xbox glyphs. Steam and other store versions are not tested yet. |
+| Dredge+ (Apple Arcade) | Not observed / unconfirmed | Known glyph-switching behavior | Keep Paddlr enabled if you want paddle-to-keyboard binds. Disable per-app only if keyboard/controller glyph switching is too distracting. | Similar dynamic prompt switching was observed, though less frequently than in Cult of the Lamb. Steam and other store versions are not tested yet. |
+| World of Warcraft with ConsolePort | Yes, through ConsolePort's native Elite paddle support | Known dual-input behavior | Disable Paddlr per-app for World of Warcraft when using ConsolePort's native paddle support, or avoid duplicate binds if you intentionally want both. | ConsolePort can detect Elite paddles natively. If the paddles are also mapped to keyboard binds and Paddlr is enabled for World of Warcraft, the game/add-on can receive both the native paddle input and Paddlr's keyboard output. |
 
 ## General gameplay notes
 
