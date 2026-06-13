@@ -14,82 +14,8 @@ struct PermissionRestartPrompt: Equatable, Hashable {
     var informativeText: String
 }
 
-struct MenuBarControllerSelection: Identifiable, Hashable {
-    var identifier: String
-    var displayName: String
-    var productName: String
-    var index: Int
-    var isConnected: Bool
-    var isPinned: Bool
-    var isPrimary: Bool
-    var hasCustomDisplayName: Bool
-
-    var id: String {
-        identifier
-    }
-
-    var title: String {
-        displayName
-    }
-}
-
-struct MenuBarPinnedApplication: Codable, Equatable, Identifiable, Hashable {
-    var bundleIdentifier: String
-    var appName: String
-
-    var id: String {
-        bundleIdentifier
-    }
-}
-
-struct ControllerConfiguration: Codable, Equatable {
-    var identifier: String
-    var productName: String?
-    var displayName: String?
-    var profileID: UUID?
-    var isPinned: Bool
-    var isPrimary: Bool
-
-    init(
-        identifier: String,
-        productName: String? = nil,
-        displayName: String? = nil,
-        profileID: UUID? = nil,
-        isPinned: Bool = false,
-        isPrimary: Bool = false
-    ) {
-        self.identifier = identifier
-        self.productName = productName
-        self.displayName = displayName
-        self.profileID = profileID
-        self.isPinned = isPinned
-        self.isPrimary = isPrimary
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case identifier
-        case productName
-        case displayName
-        case profileID
-        case isPinned
-        case isPrimary
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        identifier = try container.decode(String.self, forKey: .identifier)
-        productName = try container.decodeIfPresent(String.self, forKey: .productName)
-        displayName = try container.decodeIfPresent(String.self, forKey: .displayName)
-        profileID = try container.decodeIfPresent(UUID.self, forKey: .profileID)
-        isPinned = try container.decodeIfPresent(Bool.self, forKey: .isPinned) ?? false
-        isPrimary = try container.decodeIfPresent(Bool.self, forKey: .isPrimary) ?? false
-    }
-}
-
-private struct ControllerPaddleKey: Hashable {
-    var controllerIdentifier: String
-    var paddle: Paddle
-}
+typealias MenuBarControllerSelection = ControllerSelection
+typealias MenuBarPinnedApplication = PinnedApplication
 
 /// Observable state and orchestration for the Phase 3/4 menu bar app.
 final class MenuBarMapperModel: ObservableObject {
@@ -99,7 +25,7 @@ final class MenuBarMapperModel: ObservableObject {
                 return
             }
 
-            defaults.set(outputEnabled, forKey: Self.outputEnabledDefaultsKey)
+            settingsStore.writeOutputEnabled(outputEnabled)
             recordEventFromAnyThread("[Output] Keyboard output \(outputEnabled ? "enabled" : "disabled").")
 
             if !outputEnabled {
@@ -115,7 +41,7 @@ final class MenuBarMapperModel: ObservableObject {
                 return
             }
 
-            defaults.set(defaultApplicationOutputEnabled, forKey: Self.defaultApplicationOutputEnabledDefaultsKey)
+            settingsStore.writeDefaultApplicationOutputEnabled(defaultApplicationOutputEnabled)
             appendEvent("[Output] Default application output \(defaultApplicationOutputEnabled ? "enabled" : "disabled").")
 
             if !defaultApplicationOutputEnabled, activeAppRule == nil {
@@ -138,7 +64,7 @@ final class MenuBarMapperModel: ObservableObject {
             releasePostedKeys(reason: "profile changed")
             if selectedControllerIdentifier == nil {
                 defaultSelectedProfileID = selectedProfileID
-                defaults.set(selectedProfileID.uuidString, forKey: Self.selectedProfileIDDefaultsKey)
+                settingsStore.writeSelectedProfileID(selectedProfileID)
             }
             appendEvent("[Profile] Selected \(selectedProfileName).")
         }
@@ -165,22 +91,6 @@ final class MenuBarMapperModel: ObservableObject {
         isControllerConnected: false
     )
 
-    private static let outputEnabledDefaultsKey = "com.paddlr.phase3.outputEnabled"
-    private static let legacyOutputEnabledDefaultsKey = "com.elitemapper.phase3.outputEnabled"
-    private static let defaultApplicationOutputEnabledDefaultsKey = "com.paddlr.phase4.defaultApplicationOutputEnabled"
-    private static let legacyDefaultApplicationOutputEnabledDefaultsKey = "com.elitemapper.phase4.defaultApplicationOutputEnabled"
-    private static let mappingDefaultsPrefix = "com.paddlr.phase3.mapping."
-    private static let legacyMappingDefaultsPrefix = "com.elitemapper.phase3.mapping."
-    private static let profilesDefaultsKey = "com.paddlr.phase4.profiles.v1"
-    private static let legacyProfilesDefaultsKey = "com.elitemapper.phase4.profiles.v1"
-    private static let selectedProfileIDDefaultsKey = "com.paddlr.phase4.selectedProfileID"
-    private static let legacySelectedProfileIDDefaultsKey = "com.elitemapper.phase4.selectedProfileID"
-    private static let appRulesDefaultsKey = "com.paddlr.phase4.appRules.v1"
-    private static let legacyAppRulesDefaultsKey = "com.elitemapper.phase4.appRules.v1"
-    private static let pinnedApplicationsDefaultsKey = "com.paddlr.phase4.pinnedApplications.v1"
-    private static let controllerConfigurationsDefaultsKey = "com.paddlr.phase5.controllerConfigurations.v1"
-    private static let legacyControllerConfigurationsDefaultsKey = "com.elitemapper.phase5.controllerConfigurations.v1"
-    private static let maxRecentEvents = 40
     private static let maxObservedApplications = 3
     private static let deviceStatusPollInterval: TimeInterval = 3
     private static let debugConsoleLoggingEnabled = MenuBarMapperModel.isEnvironmentFlagEnabled(
@@ -188,35 +98,20 @@ final class MenuBarMapperModel: ObservableObject {
         legacyKey: "ELITEMAPPER_DEBUG_LOG"
     )
 
-    private static let encoder = JSONEncoder()
-    private static let decoder = JSONDecoder()
-
-    private static let eventTimestampFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss"
-        return formatter
-    }()
-
-    private enum PermissionRestartPromptKind {
-        case accessibility
-        case controllerInputAccess
-    }
-
-    private let defaults: UserDefaults
+    private let settingsStore: PaddlrSettingsStore
+    private let controllerSelectionCoordinator = ControllerSelectionCoordinator()
+    private let monitorStatusPresenter = MonitorStatusPresenter()
     private var monitor: HIDPaddleMonitor?
     private var frontmostAppMonitor: FrontmostAppMonitor?
     private var keyCaptureMonitor: Any?
     private var deviceStatusPollTimer: Timer?
-    private var recentEventBuffer: [String] = []
-    private var isRecentEventPublishingEnabled = false
+    private var recentEventLog = RecentEventLogModel(maxEvents: 40)
     private var defaultSelectedProfileID: UUID
     private var isSyncingSelectedProfileFromController = false
     private var selectedControllerSelectionWasUserInitiated = false
-    private var pendingPermissionRestartPromptKind: PermissionRestartPromptKind?
-    private var pendingPermissionRestartPromptArmedAt: Date?
-    private var permissionRequestObservedApplicationResignActive = false
+    private var permissionCoordinator = PermissionCoordinator()
     private var livePressedPaddlesByController: [String: Set<Paddle>] = [:]
-    private var postedKeyboardByControllerPaddle: [ControllerPaddleKey: KeyboardMapping] = [:]
+    private var keyboardOutputSessionTracker = KeyboardOutputSessionTracker()
 
     private lazy var synthesizer = KeyboardOutputSynthesizer { [weak self] message in
         self?.recordEventFromAnyThread("[Keyboard] \(message)")
@@ -243,15 +138,14 @@ final class MenuBarMapperModel: ObservableObject {
             return nil
         }
 
-        return appRule(bundleIdentifier: ruleKey, controllerIdentifier: selectedControllerIdentifier)
+        return profileResolver.appRule(bundleIdentifier: ruleKey, controllerIdentifier: selectedControllerIdentifier)
     }
 
     var effectiveProfile: MappingProfile {
-        let profileID = profileIDForApplication(
+        profileResolver.effectiveProfile(
             bundleIdentifier: frontmostApplication?.ruleKey,
             controllerIdentifier: selectedControllerIdentifier
         )
-        return profiles.first(where: { $0.id == profileID }) ?? selectedProfile
     }
 
     var effectiveProfileName: String {
@@ -271,33 +165,10 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     var connectedControllerSelections: [MenuBarControllerSelection] {
-        let connectedControllersByIdentifier = Dictionary(
-            uniqueKeysWithValues: paddleDeviceStatus.controllers.map { ($0.identifier, $0) }
+        controllerSelectionCoordinator.visibleSelections(
+            configurations: controllerConfigurations,
+            connectedControllers: paddleDeviceStatus.controllers
         )
-        let visibleConfigurations = controllerConfigurations.filter { configuration in
-            configuration.isPrimary ||
-                configuration.isPinned ||
-                connectedControllersByIdentifier[configuration.identifier] != nil
-        }
-
-        return visibleConfigurations
-            .sorted(by: controllerConfigurationSort(_:_:))
-            .enumerated()
-            .map { index, configuration in
-                let connectedController = connectedControllersByIdentifier[configuration.identifier]
-                let productName = connectedController?.productName ?? configuration.productName ?? "Xbox Wireless Controller"
-                let displayName = controllerDisplayName(for: configuration.identifier, fallback: productName)
-                return MenuBarControllerSelection(
-                    identifier: configuration.identifier,
-                    displayName: displayName,
-                    productName: productName,
-                    index: index + 1,
-                    isConnected: connectedController != nil,
-                    isPinned: configuration.isPinned,
-                    isPrimary: configuration.isPrimary,
-                    hasCustomDisplayName: configuration.displayName?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty != nil
-                )
-            }
     }
 
     var selectedControllerSelection: MenuBarControllerSelection? {
@@ -340,51 +211,50 @@ final class MenuBarMapperModel: ObservableObject {
         return profileForController(identifier: identifier)
     }
 
-    init(defaults: UserDefaults = .standard) {
-        self.defaults = defaults
+    private var profileResolver: ProfileResolver {
+        ProfileResolver(
+            profiles: profiles,
+            appRules: appRules,
+            controllerConfigurations: controllerConfigurations,
+            defaultProfileID: defaultSelectedProfileID,
+            selectedProfileID: selectedProfileID,
+            outputEnabled: outputEnabled,
+            defaultApplicationOutputEnabled: defaultApplicationOutputEnabled
+        )
+    }
 
-        let loadedProfiles = Self.loadProfiles(from: defaults)
+    init(defaults: UserDefaults = .standard) {
+        let settingsStore = PaddlrSettingsStore(defaults: defaults)
+        self.settingsStore = settingsStore
+
+        let loadedProfiles = settingsStore.loadProfiles()
         let resolvedProfiles = loadedProfiles.isEmpty ? [MappingProfile.defaultProfile] : loadedProfiles
         self.profiles = resolvedProfiles
-        self.appRules = Self.loadAppRules(from: defaults)
-        self.pinnedApplications = Self.loadPinnedApplications(from: defaults)
-        let loadedControllerConfigurations = Self.loadControllerConfigurations(from: defaults)
+        self.appRules = settingsStore.loadAppRules()
+        self.pinnedApplications = settingsStore.loadPinnedApplications()
+        let loadedControllerConfigurations = settingsStore.loadControllerConfigurations()
         self.controllerConfigurations = loadedControllerConfigurations
-        let restoredControllerIdentifier = Self.defaultSelectedControllerIdentifier(from: loadedControllerConfigurations)
+        let restoredControllerIdentifier = controllerSelectionCoordinator.defaultSelectedControllerIdentifier(
+            from: loadedControllerConfigurations
+        )
         self.selectedControllerIdentifier = restoredControllerIdentifier
 
-        let savedSelectedProfileID = Self.stringDefaults(
-            from: defaults,
-            key: Self.selectedProfileIDDefaultsKey,
-            legacyKey: Self.legacySelectedProfileIDDefaultsKey
-        ).compactMap(UUID.init(uuidString:)).first
-        let fallbackSelectedProfileID = resolvedProfiles.first?.id ?? MappingProfile.defaultProfile.id
-        let initialSelectedProfileID = savedSelectedProfileID.flatMap { savedID in
-            resolvedProfiles.contains(where: { $0.id == savedID }) ? savedID : nil
-        } ?? fallbackSelectedProfileID
+        let initialSelectedProfileID = settingsStore.loadSelectedProfileID(availableProfiles: resolvedProfiles)
         self.selectedProfileID = initialSelectedProfileID
         self.defaultSelectedProfileID = initialSelectedProfileID
 
-        self.outputEnabled = Self.boolDefault(
-            from: defaults,
-            key: Self.outputEnabledDefaultsKey,
-            legacyKey: Self.legacyOutputEnabledDefaultsKey
-        ) ?? true
-        self.defaultApplicationOutputEnabled = Self.boolDefault(
-            from: defaults,
-            key: Self.defaultApplicationOutputEnabledDefaultsKey,
-            legacyKey: Self.legacyDefaultApplicationOutputEnabledDefaultsKey
-        ) ?? true
+        self.outputEnabled = settingsStore.loadOutputEnabled()
+        self.defaultApplicationOutputEnabled = settingsStore.loadDefaultApplicationOutputEnabled()
         self.accessibilityTrusted = KeyboardOutputSynthesizer.isAccessibilityTrusted(prompt: false)
         self.inputMonitoringTrusted = HIDPaddleMonitor.isInputMonitoringTrusted(prompt: false)
 
-        defaults.set(outputEnabled, forKey: Self.outputEnabledDefaultsKey)
-        defaults.set(defaultApplicationOutputEnabled, forKey: Self.defaultApplicationOutputEnabledDefaultsKey)
+        settingsStore.writeOutputEnabled(outputEnabled)
+        settingsStore.writeDefaultApplicationOutputEnabled(defaultApplicationOutputEnabled)
         persistProfiles()
         persistAppRules()
         persistPinnedApplications()
         persistControllerConfigurations()
-        defaults.set(defaultSelectedProfileID.uuidString, forKey: Self.selectedProfileIDDefaultsKey)
+        settingsStore.writeSelectedProfileID(defaultSelectedProfileID)
 
         appendEvent("[App] Paddlr menu bar UI started.")
         appendEvent("[Profile] Selected \(selectedProfileName).")
@@ -425,13 +295,8 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     func setPopoverVisible(_ isVisible: Bool) {
-        guard isRecentEventPublishingEnabled != isVisible else {
-            return
-        }
-
-        isRecentEventPublishingEnabled = isVisible
-        if isVisible {
-            recentEvents = recentEventBuffer
+        if let events = recentEventLog.setPublishingEnabled(isVisible) {
+            recentEvents = events
             publishPressedPaddlesIfVisible()
         }
     }
@@ -644,26 +509,20 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     func noteApplicationDidResignActive() {
-        if pendingPermissionRestartPromptKind != nil {
-            permissionRequestObservedApplicationResignActive = true
-        }
+        permissionCoordinator.noteApplicationDidResignActive()
     }
 
     func consumePermissionRestartPromptAfterActivation() -> PermissionRestartPrompt? {
-        guard pendingPermissionRestartPromptKind != nil else {
+        guard permissionCoordinator.hasPendingPrompt else {
             return nil
         }
 
         refreshPermissionTrustAfterReturn()
 
-        let elapsedSinceRequest = pendingPermissionRestartPromptArmedAt.map { Date().timeIntervalSince($0) } ?? 0
-        guard permissionRequestObservedApplicationResignActive || elapsedSinceRequest > 2 else {
+        guard permissionCoordinator.consumeRestartPromptAfterActivation() else {
             return nil
         }
 
-        pendingPermissionRestartPromptKind = nil
-        pendingPermissionRestartPromptArmedAt = nil
-        permissionRequestObservedApplicationResignActive = false
         return PermissionRestartPrompt(
             messageText: "Restart Paddlr to finish permission changes",
             informativeText: "macOS permission changes may not take effect in a running app immediately. Click Restart Paddlr to quit and reopen automatically."
@@ -734,7 +593,7 @@ final class MenuBarMapperModel: ObservableObject {
         } else {
             releasePostedKeys(reason: "default application profile saved")
             defaultSelectedProfileID = profileID
-            defaults.set(profileID.uuidString, forKey: Self.selectedProfileIDDefaultsKey)
+            settingsStore.writeSelectedProfileID(profileID)
             appendEvent("[AppRule] Default application uses \(profile.name).")
         }
     }
@@ -769,37 +628,14 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     func appRule(bundleIdentifier: String, controllerIdentifier: String?) -> AppProfileRule? {
-        if
-            let controllerIdentifier,
-            let controllerRule = appRules.first(where: {
-                $0.bundleIdentifier == bundleIdentifier && $0.controllerIdentifier == controllerIdentifier
-            })
-        {
-            return controllerRule
-        }
-
-        return appRules.first { $0.bundleIdentifier == bundleIdentifier && $0.controllerIdentifier == nil }
+        profileResolver.appRule(bundleIdentifier: bundleIdentifier, controllerIdentifier: controllerIdentifier)
     }
 
     func profileIDForApplication(bundleIdentifier: String?, controllerIdentifier: String?) -> UUID {
-        if
-            let bundleIdentifier,
-            let rule = appRule(bundleIdentifier: bundleIdentifier, controllerIdentifier: controllerIdentifier),
-            case .useProfile(let profileID) = rule.action,
-            profiles.contains(where: { $0.id == profileID })
-        {
-            return profileID
-        }
-
-        if
-            let controllerIdentifier,
-            let profileID = controllerConfiguration(for: controllerIdentifier)?.profileID,
-            profiles.contains(where: { $0.id == profileID })
-        {
-            return profileID
-        }
-
-        return validDefaultSelectedProfileID()
+        profileResolver.profileIDForApplication(
+            bundleIdentifier: bundleIdentifier,
+            controllerIdentifier: controllerIdentifier
+        )
     }
 
     func syncSelectedProfileForApplication(bundleIdentifier: String?, controllerIdentifier: String?) {
@@ -854,9 +690,7 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     private func armPermissionRestartPrompt(for kind: PermissionRestartPromptKind) {
-        pendingPermissionRestartPromptKind = kind
-        pendingPermissionRestartPromptArmedAt = Date()
-        permissionRequestObservedApplicationResignActive = false
+        permissionCoordinator.armRestartPrompt(for: kind)
     }
 
     private func refreshPermissionTrustAfterReturn() {
@@ -1117,101 +951,55 @@ final class MenuBarMapperModel: ObservableObject {
         controllerIdentifier: String,
         paddle: Paddle
     ) {
-        let source = ControllerPaddleKey(controllerIdentifier: controllerIdentifier, paddle: paddle)
-
-        if isPressed {
-            guard postedKeyboardByControllerPaddle[source] == nil else {
-                return
-            }
-
-            let shouldPostKeyDown = !postedKeyboardByControllerPaddle.values.contains(mapping)
-            postedKeyboardByControllerPaddle[source] = mapping
-            if shouldPostKeyDown {
-                synthesizer.setKeyboard(mapping, isPressed: true)
-            }
-        } else {
-            let postedMapping = postedKeyboardByControllerPaddle.removeValue(forKey: source) ?? mapping
-            let shouldPostKeyUp = !postedKeyboardByControllerPaddle.values.contains(postedMapping)
-            if shouldPostKeyUp {
-                synthesizer.setKeyboard(postedMapping, isPressed: false)
-            }
+        let source = KeyboardOutputSource(controllerIdentifier: controllerIdentifier, paddle: paddle)
+        if let command = keyboardOutputSessionTracker.setKeyboard(mapping, isPressed: isPressed, source: source) {
+            performKeyboardOutputCommand(command)
         }
     }
 
     private func releasePostedKeys(for controllerIdentifiers: Set<String>, reason: String) {
-        guard !controllerIdentifiers.isEmpty, !postedKeyboardByControllerPaddle.isEmpty else {
-            return
-        }
-
-        let removedMappings = postedKeyboardByControllerPaddle.compactMap { source, mapping in
-            controllerIdentifiers.contains(source.controllerIdentifier) ? mapping : nil
-        }
-        postedKeyboardByControllerPaddle = postedKeyboardByControllerPaddle.filter { source, _ in
-            !controllerIdentifiers.contains(source.controllerIdentifier)
-        }
-
-        for mapping in Set(removedMappings).sorted(by: { $0.displayName < $1.displayName }) {
-            guard !postedKeyboardByControllerPaddle.values.contains(mapping) else {
-                continue
-            }
-            synthesizer.setKeyboard(mapping, isPressed: false)
-            appendEvent("[Output] Released \(mapping.displayName) due to \(reason).")
+        let commands = keyboardOutputSessionTracker.releaseAll(for: controllerIdentifiers)
+        for command in commands {
+            performKeyboardOutputCommand(command)
+            appendReleaseEvent(for: command, reason: reason)
         }
     }
 
     private func releasePostedKeys(reason: String) {
-        guard !postedKeyboardByControllerPaddle.isEmpty else {
-            return
+        let commands = keyboardOutputSessionTracker.releaseAll()
+        for command in commands {
+            performKeyboardOutputCommand(command)
+            appendReleaseEvent(for: command, reason: reason)
         }
+    }
 
-        let postedKeys = postedKeyboardByControllerPaddle
-        postedKeyboardByControllerPaddle.removeAll()
-        let uniqueMappings = Set(postedKeys.values)
-
-        for mapping in uniqueMappings.sorted(by: { $0.displayName < $1.displayName }) {
+    private func performKeyboardOutputCommand(_ command: KeyboardOutputCommand) {
+        switch command {
+        case .keyDown(let mapping):
+            synthesizer.setKeyboard(mapping, isPressed: true)
+        case .keyUp(let mapping):
             synthesizer.setKeyboard(mapping, isPressed: false)
+        }
+    }
+
+    private func appendReleaseEvent(for command: KeyboardOutputCommand, reason: String) {
+        if case .keyUp(let mapping) = command {
             appendEvent("[Output] Released \(mapping.displayName) due to \(reason).")
         }
     }
 
     private func registerConnectedControllers(_ controllers: [HIDPaddleControllerInfo]) {
-        guard !controllers.isEmpty else {
-            return
-        }
+        let registration = controllerSelectionCoordinator.registerConnectedControllers(
+            controllers,
+            configurations: controllerConfigurations
+        )
 
-        var configurations = controllerConfigurations
-        var hasPrimaryController = configurations.contains(where: \.isPrimary)
-        var newlyAssignedPrimaryIdentifier: String?
-
-        for controller in controllers {
-            let shouldBecomePrimary = !hasPrimaryController
-            if let configurationIndex = configurations.firstIndex(where: { $0.identifier == controller.identifier }) {
-                configurations[configurationIndex].productName = controller.productName
-                if shouldBecomePrimary {
-                    configurations[configurationIndex].isPrimary = true
-                }
-            } else {
-                configurations.append(
-                    ControllerConfiguration(
-                        identifier: controller.identifier,
-                        productName: controller.productName,
-                        isPrimary: shouldBecomePrimary
-                    )
-                )
-            }
-
-            if shouldBecomePrimary {
-                newlyAssignedPrimaryIdentifier = controller.identifier
-                hasPrimaryController = true
-            }
-        }
-
-        if configurations != controllerConfigurations {
-            controllerConfigurations = configurations
+        if registration.configurations != controllerConfigurations {
+            controllerConfigurations = registration.configurations
             persistControllerConfigurations()
         }
 
-        if selectedControllerIdentifier == nil, let newlyAssignedPrimaryIdentifier {
+        if selectedControllerIdentifier == nil, let newlyAssignedPrimaryIdentifier = registration.newlyAssignedPrimaryIdentifier {
             selectedControllerSelectionWasUserInitiated = false
             selectedControllerIdentifier = newlyAssignedPrimaryIdentifier
             syncSelectedProfileForSelectedController()
@@ -1219,31 +1007,22 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     private func syncSelectedControllerAfterStatusChange() {
-        let selections = connectedControllerSelections
-        if let selectedControllerIdentifier {
-            if let selectedController = selections.first(where: { $0.identifier == selectedControllerIdentifier }) {
-                if !selectedControllerSelectionWasUserInitiated,
-                   !selectedController.isConnected,
-                   let firstConnectedController = selections.first(where: \.isConnected) {
-                    selectedControllerSelectionWasUserInitiated = false
-                    self.selectedControllerIdentifier = firstConnectedController.identifier
-                    syncSelectedProfileForSelectedController()
-                    publishPressedPaddlesIfVisible()
-                    return
-                }
+        let state = controllerSelectionCoordinator.selectionAfterStatusChange(
+            selections: connectedControllerSelections,
+            selectedControllerIdentifier: selectedControllerIdentifier,
+            selectionWasUserInitiated: selectedControllerSelectionWasUserInitiated
+        )
 
-                syncSelectedProfileForSelectedController()
-                return
-            }
+        selectedControllerSelectionWasUserInitiated = state.selectionWasUserInitiated
+        selectedControllerIdentifier = state.selectedControllerIdentifier
 
-            selectedControllerSelectionWasUserInitiated = false
-            self.selectedControllerIdentifier = selections.first(where: \.isConnected)?.identifier ?? selections.first?.identifier
+        if state.shouldSyncSelectedProfile {
             syncSelectedProfileForSelectedController()
-            publishPressedPaddlesIfVisible()
-            return
         }
 
-        publishPressedPaddlesIfVisible()
+        if state.shouldPublishPressedPaddles {
+            publishPressedPaddlesIfVisible()
+        }
     }
 
     private func syncSelectedProfileForSelectedController() {
@@ -1263,96 +1042,26 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     private func profileForController(identifier: String) -> MappingProfile {
-        if
-            let ruleKey = frontmostApplication?.ruleKey,
-            let controllerAppRule = appRule(bundleIdentifier: ruleKey, controllerIdentifier: identifier),
-            case .useProfile(let profileID) = controllerAppRule.action,
-            let profile = profiles.first(where: { $0.id == profileID })
-        {
-            return profile
-        }
-
-        let fallbackProfileID = fallbackProfileIDForUnassignedController(identifier: identifier)
-        return profiles.first(where: { $0.id == fallbackProfileID }) ?? selectedProfile
-    }
-
-    private func fallbackProfileIDForUnassignedController(identifier: String?) -> UUID {
-        if
-            let ruleKey = frontmostApplication?.ruleKey,
-            let activeAppRule = appRule(bundleIdentifier: ruleKey, controllerIdentifier: identifier),
-            case .useProfile(let profileID) = activeAppRule.action,
-            profiles.contains(where: { $0.id == profileID })
-        {
-            return profileID
-        }
-
-        if
-            let identifier,
-            let profileID = controllerConfiguration(for: identifier)?.profileID,
-            profiles.contains(where: { $0.id == profileID })
-        {
-            return profileID
-        }
-
-        return validDefaultSelectedProfileID()
+        profileResolver.profileForController(identifier: identifier, bundleIdentifier: frontmostApplication?.ruleKey)
     }
 
     private func effectiveOutputEnabled(forControllerIdentifier controllerIdentifier: String?) -> Bool {
-        guard outputEnabled else {
-            return false
-        }
-
-        guard
-            let ruleKey = frontmostApplication?.ruleKey,
-            let activeAppRule = appRule(bundleIdentifier: ruleKey, controllerIdentifier: controllerIdentifier)
-        else {
-            return defaultApplicationOutputEnabled
-        }
-
-        switch activeAppRule.action {
-        case .useProfile:
-            return true
-        case .disableOutput:
-            return false
-        }
-    }
-
-    private func validDefaultSelectedProfileID() -> UUID {
-        if profiles.contains(where: { $0.id == defaultSelectedProfileID }) {
-            return defaultSelectedProfileID
-        }
-
-        return profiles.first?.id ?? selectedProfileID
-    }
-
-    private func controllerConfigurationSort(_ lhs: ControllerConfiguration, _ rhs: ControllerConfiguration) -> Bool {
-        if lhs.isPrimary != rhs.isPrimary {
-            return lhs.isPrimary
-        }
-
-        if lhs.isPinned != rhs.isPinned {
-            return lhs.isPinned
-        }
-
-        let lhsName = controllerDisplayName(for: lhs.identifier, fallback: lhs.productName ?? "Xbox Wireless Controller")
-        let rhsName = controllerDisplayName(for: rhs.identifier, fallback: rhs.productName ?? "Xbox Wireless Controller")
-        if lhsName != rhsName {
-            return lhsName.localizedCaseInsensitiveCompare(rhsName) == .orderedAscending
-        }
-
-        return lhs.identifier < rhs.identifier
+        profileResolver.effectiveOutputEnabled(
+            bundleIdentifier: frontmostApplication?.ruleKey,
+            controllerIdentifier: controllerIdentifier
+        )
     }
 
     private func controllerDisplayName(for controller: HIDPaddleControllerInfo) -> String {
-        controllerDisplayName(for: controller.identifier, fallback: controller.productName)
+        controllerSelectionCoordinator.displayName(for: controller, configurations: controllerConfigurations)
     }
 
     private func controllerDisplayName(for identifier: String, fallback: String) -> String {
-        controllerConfiguration(for: identifier)?.displayName?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty ?? fallback
-    }
-
-    private func controllerConfiguration(for identifier: String) -> ControllerConfiguration? {
-        controllerConfigurations.first(where: { $0.identifier == identifier })
+        controllerSelectionCoordinator.displayName(
+            for: identifier,
+            fallback: fallback,
+            configurations: controllerConfigurations
+        )
     }
 
     private func updateControllerConfiguration(
@@ -1415,8 +1124,7 @@ final class MenuBarMapperModel: ObservableObject {
 
     private func persistProfiles() {
         do {
-            let data = try Self.encoder.encode(profiles)
-            defaults.set(data, forKey: Self.profilesDefaultsKey)
+            try settingsStore.writeProfiles(profiles)
         } catch {
             appendEvent("[Profile] Failed to persist profiles: \(error.localizedDescription)")
         }
@@ -1424,8 +1132,7 @@ final class MenuBarMapperModel: ObservableObject {
 
     private func persistAppRules() {
         do {
-            let data = try Self.encoder.encode(appRules)
-            defaults.set(data, forKey: Self.appRulesDefaultsKey)
+            try settingsStore.writeAppRules(appRules)
         } catch {
             appendEvent("[AppRule] Failed to persist app rules: \(error.localizedDescription)")
         }
@@ -1433,8 +1140,7 @@ final class MenuBarMapperModel: ObservableObject {
 
     private func persistPinnedApplications() {
         do {
-            let data = try Self.encoder.encode(pinnedApplications)
-            defaults.set(data, forKey: Self.pinnedApplicationsDefaultsKey)
+            try settingsStore.writePinnedApplications(pinnedApplications)
         } catch {
             appendEvent("[App] Failed to persist pinned apps: \(error.localizedDescription)")
         }
@@ -1442,8 +1148,7 @@ final class MenuBarMapperModel: ObservableObject {
 
     private func persistControllerConfigurations() {
         do {
-            let data = try Self.encoder.encode(controllerConfigurations)
-            defaults.set(data, forKey: Self.controllerConfigurationsDefaultsKey)
+            try settingsStore.writeControllerConfigurations(controllerConfigurations)
         } catch {
             appendEvent("[Controller] Failed to persist controller settings: \(error.localizedDescription)")
         }
@@ -1480,15 +1185,8 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     private func appendEvent(_ message: String) {
-        let timestamp = Self.eventTimestampFormatter.string(from: Date())
-        recentEventBuffer.insert("[\(timestamp)] \(message)", at: 0)
-
-        if recentEventBuffer.count > Self.maxRecentEvents {
-            recentEventBuffer.removeLast(recentEventBuffer.count - Self.maxRecentEvents)
-        }
-
-        if isRecentEventPublishingEnabled {
-            recentEvents = recentEventBuffer
+        if let events = recentEventLog.append(message) {
+            recentEvents = events
         }
     }
 
@@ -1498,7 +1196,7 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     private func publishPressedPaddlesIfVisible() {
-        guard isRecentEventPublishingEnabled else {
+        guard recentEventLog.isPublishing else {
             return
         }
 
@@ -1511,164 +1209,14 @@ final class MenuBarMapperModel: ObservableObject {
     }
 
     private func updateMonitorStatus(from message: String) {
-        if message.contains("Raw IOHID paddle monitor listening") {
-            if paddleDeviceStatus.connectedDeviceCount > 1 {
-                monitorStatus = "Listening to \(paddleDeviceStatus.connectedDeviceCount) Xbox Elite controllers."
-            } else if paddleDeviceStatus.isConnected {
-                monitorStatus = "Listening for Xbox Elite paddle input."
-            } else if paddleDeviceStatus.unsupportedControllerCount > 0 {
-                monitorStatus = "Microsoft controller detected without Elite paddle input."
-            } else {
-                monitorStatus = "Listening for Xbox Elite paddle input."
-            }
-        } else if message.contains("Raw HID paddle mask element found") {
-            monitorStatus = "Paddle mask detected."
-        } else if message.contains("Raw HID paddle mask element not found") {
-            monitorStatus = "Microsoft controller detected without Elite paddle input."
-        } else if message.contains("No Microsoft gamepad HID devices found") {
-            monitorStatus = "Waiting for a Microsoft gamepad."
-            paddleDeviceStatus = HIDPaddleDeviceStatus(isConnected: false, deviceName: nil)
-        } else if message.contains("unavailable") {
-            monitorStatus = "Raw IOHID monitor unavailable."
-            paddleDeviceStatus = HIDPaddleDeviceStatus(isConnected: false, deviceName: nil)
-        } else if message.contains("Starting raw IOHID paddle monitor") {
-            monitorStatus = "Starting raw IOHID monitor..."
-        }
-    }
-
-    private static func loadProfiles(from defaults: UserDefaults) -> [MappingProfile] {
-        for data in dataDefaults(from: defaults, key: profilesDefaultsKey, legacyKey: legacyProfilesDefaultsKey) {
-            guard
-                let decodedProfiles = try? decoder.decode([MappingProfile].self, from: data),
-                !decodedProfiles.isEmpty
-            else {
-                continue
-            }
-
-            return normalizeDefaultProfileName(
-                decodedProfiles.map { MappingProfile(id: $0.id, name: $0.name, actions: $0.actions) }
-            )
+        guard let presentation = monitorStatusPresenter.presentation(for: message, paddleDeviceStatus: paddleDeviceStatus) else {
+            return
         }
 
-        let legacyMappings = loadLegacySyntheticMappings(from: defaults)
-        return [MappingProfile.defaultProfile(legacySyntheticMappings: legacyMappings)]
-    }
-
-    private static func normalizeDefaultProfileName(_ profiles: [MappingProfile]) -> [MappingProfile] {
-        guard !profiles.isEmpty else {
-            return profiles
+        monitorStatus = presentation.monitorStatus
+        if let status = presentation.paddleDeviceStatus {
+            paddleDeviceStatus = status
         }
-
-        var normalizedProfiles = profiles
-        let currentName = normalizedProfiles[0].name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let legacyDefaultNames = ["", "Default", "Default Preset", "Untitled Profile", "Untitled Preset"]
-        if legacyDefaultNames.contains(currentName) {
-            normalizedProfiles[0] = normalizedProfiles[0].withName(MappingProfile.defaultProfileName)
-        }
-
-        return normalizedProfiles
-    }
-
-    private static func loadLegacySyntheticMappings(from defaults: UserDefaults) -> [Paddle: SyntheticKey] {
-        var mappings: [Paddle: SyntheticKey] = [:]
-
-        for paddle in Paddle.allCases {
-            guard let key = stringDefaults(
-                from: defaults,
-                key: mappingDefaultsKey(for: paddle),
-                legacyKey: legacyMappingDefaultsKey(for: paddle)
-            ).compactMap(SyntheticKey.init(rawValue:)).first else {
-                continue
-            }
-
-            mappings[paddle] = key
-        }
-
-        return mappings
-    }
-
-    private static func loadAppRules(from defaults: UserDefaults) -> [AppProfileRule] {
-        for data in dataDefaults(from: defaults, key: appRulesDefaultsKey, legacyKey: legacyAppRulesDefaultsKey) {
-            if let rules = try? decoder.decode([AppProfileRule].self, from: data) {
-                return rules
-            }
-        }
-
-        return []
-    }
-
-    private static func loadPinnedApplications(from defaults: UserDefaults) -> [MenuBarPinnedApplication] {
-        guard
-            let data = defaults.data(forKey: pinnedApplicationsDefaultsKey),
-            let pinnedApplications = try? decoder.decode([MenuBarPinnedApplication].self, from: data)
-        else {
-            return []
-        }
-
-        return pinnedApplications
-    }
-
-    private static func loadControllerConfigurations(from defaults: UserDefaults) -> [ControllerConfiguration] {
-        for data in dataDefaults(
-            from: defaults,
-            key: controllerConfigurationsDefaultsKey,
-            legacyKey: legacyControllerConfigurationsDefaultsKey
-        ) {
-            if let configurations = try? decoder.decode([ControllerConfiguration].self, from: data) {
-                return configurations
-            }
-        }
-
-        return []
-    }
-
-    private static func defaultSelectedControllerIdentifier(from configurations: [ControllerConfiguration]) -> String? {
-        configurations.first(where: \.isPrimary)?.identifier ??
-            configurations.first(where: \.isPinned)?.identifier
-    }
-
-    private static func mappingDefaultsKey(for paddle: Paddle) -> String {
-        "\(mappingDefaultsPrefix)\(paddle.rawValue)"
-    }
-
-    private static func legacyMappingDefaultsKey(for paddle: Paddle) -> String {
-        "\(legacyMappingDefaultsPrefix)\(paddle.rawValue)"
-    }
-
-    private static func dataDefaults(from defaults: UserDefaults, key: String, legacyKey: String) -> [Data] {
-        var values: [Data] = []
-
-        if let data = defaults.data(forKey: key) {
-            values.append(data)
-        }
-
-        if let legacyData = defaults.data(forKey: legacyKey), !values.contains(legacyData) {
-            values.append(legacyData)
-        }
-
-        return values
-    }
-
-    private static func stringDefaults(from defaults: UserDefaults, key: String, legacyKey: String) -> [String] {
-        var values: [String] = []
-
-        if let value = defaults.string(forKey: key) {
-            values.append(value)
-        }
-
-        if let legacyValue = defaults.string(forKey: legacyKey), !values.contains(legacyValue) {
-            values.append(legacyValue)
-        }
-
-        return values
-    }
-
-    private static func boolDefault(from defaults: UserDefaults, key: String, legacyKey: String) -> Bool? {
-        if let value = defaults.object(forKey: key) as? Bool {
-            return value
-        }
-
-        return defaults.object(forKey: legacyKey) as? Bool
     }
 
     private static func isEnvironmentFlagEnabled(_ key: String, legacyKey: String) -> Bool {
