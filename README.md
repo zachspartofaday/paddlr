@@ -31,28 +31,25 @@ It is currently focused on safe keyboard output: each paddle can send a configur
 
 ### 1. Download and open Paddlr
 
-Download the latest `Paddlr-<version>.zip` from [Releases](https://github.com/zachspartofaday/paddlr/releases). It contains `Paddlr.app` for users who do not want to build from source.
+Download the latest `Paddlr-<version>.zip` from [Releases](https://github.com/zachspartofaday/paddlr/releases) when a release archive is available. It contains `Paddlr.app` for users who do not want to build from source.
 
-The app bundle is locally signed so macOS can validate its contents, but it is not Apple-notarized. macOS will likely show a warning such as “Paddlr.app can’t be opened because Apple cannot check it for malicious software” or may offer to move it to Trash.
-
-If you trust the release source, this first-launch flow is expected:
+Current preview downloads are locally signed and are not Apple-notarized unless a release explicitly says otherwise. macOS may show **“Paddlr” Not Opened** with **Move to Trash** and **Done**. For trusted Paddlr downloads or local builds, click **Done** first, then use the Privacy & Security **Open Anyway** flow.
 
 1. Unzip the archive and move `Paddlr.app` to Applications if desired.
 2. Try opening `Paddlr.app`.
-3. macOS will likely show **“Paddlr” Not Opened** with **Move to Trash** and **Done**. Click **Done** first. Do not choose **Move to Trash**.
+3. Confirm that you want to open the downloaded app if macOS asks.
+
+The same Gatekeeper approval flow can also appear for locally built or unsigned preview artifacts.
 
    <p align="center">
      <img src="assets/screenshots/paddlr-gatekeeper-first-launch.png" alt="macOS first-launch warning for Paddlr" width="320" />
    </p>
 
-4. Open **System Settings -> Privacy & Security**, scroll to **Security**, and click **Open Anyway** for Paddlr.
-5. macOS will ask for confirmation with **Open Anyway** available. Click **Open Anyway**.
+Open **System Settings -> Privacy & Security**, scroll to **Security**, and click **Open Anyway** for Paddlr. macOS will ask for confirmation with **Open Anyway** available.
 
    <p align="center">
      <img src="assets/screenshots/paddlr-gatekeeper-open-anyway.png" alt="macOS Open Anyway confirmation for Paddlr" width="320" />
    </p>
-
-6. You can also try right-click/control-click -> **Open** on `Paddlr.app`, but the Privacy & Security **Open Anyway** path is usually required for this preview build.
 
 ### 2. Grant macOS permissions
 
@@ -151,14 +148,31 @@ Run the menu bar app directly from SwiftPM:
 swift run Paddlr
 ```
 
-Create the same convenience app bundle locally:
+Create the same locally signed, non-notarized convenience app bundle:
 
 ```bash
 scripts/release/package_app.sh --clean --create-zip
 open dist/Paddlr.app
 ```
 
-The packaging script creates `dist/Paddlr.app` and, when requested, a zipped release archive. It embeds the Paddlr app icon, applies local bundle signing for macOS validation, and never changes repository visibility.
+The packaging script creates `dist/Paddlr.app` and, when requested, a zipped release archive. It embeds the Paddlr app icon, applies local bundle signing for macOS validation by default, and never changes repository visibility.
+
+Maintainers with a Developer ID Application certificate and notary credentials can optionally create a Developer ID signed and Apple-notarized release archive:
+
+```bash
+xcrun notarytool store-credentials paddlr-notary \
+  --apple-id <apple-id> \
+  --team-id <team-id> \
+  --password <app-specific-password>
+
+scripts/release/package_app.sh \
+  --clean \
+  --create-zip \
+  --signing-identity "Developer ID Application: <Name> (<Team ID>)" \
+  --notarize
+```
+
+The optional notarization path stores notarization credentials in your macOS Keychain, submits the zip with `notarytool`, staples the accepted ticket to `Paddlr.app`, validates the staple, and recreates the zip from the stapled app. Do not commit Apple ID credentials, app-specific passwords, certificates, private keys, or generated `dist/` artifacts.
 
 ## Diagnostics
 
@@ -184,12 +198,12 @@ swift run PaddlrHIDProbe
 swift run PaddlrRawReportProbe
 ```
 
-## Known issues, limitations, and planned features
+## Known issues and limitations
 
 - **Xbox/gamepad button output is not supported.** Paddlr sends keyboard output only. Virtual gamepad buttons such as A/B/X/Y would require Apple-granted virtual HID/DriverKit entitlements that Paddlr does not have. For standard Xbox button rebinding, use macOS's native controller profiles.
 - **USB wired Elite 2 support needs more work.** Bluetooth paddle input works through the currently validated path; a lower-level USB backend is still under investigation.
 - **More controller variants need validation.** Additional Elite controller models, firmware versions, connection modes, and Intel Macs should be tested before broad compatibility claims.
-- **Left/right modifier-specific mappings are planned.** Current modifier mappings are generic Shift/Control/Option/Command rather than side-specific variants.
+- **Left/right modifier-specific mappings are not supported today.** Current modifier mappings are generic Shift/Control/Option/Command rather than side-specific variants.
 
 See [Compatibility Notes](COMPATIBILITY.md) for current hardware, controller-profile, and game-specific notes.
 

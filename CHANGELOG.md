@@ -4,20 +4,18 @@ All notable public-facing changes to Paddlr will be documented in this file.
 
 ## Unreleased
 
-- No public-facing changes yet.
+- Added native Elite paddle support and per-app Paddlr recommendation columns to the game compatibility table.
+- Documented that the README's two-by-two paddle mapping layout mirrors the controller's physical paddle positions.
+- Added author attribution for Zach Skjaveland / Part of a Day.
+- Clarified that current preview downloads are locally signed and non-notarized unless a release explicitly identifies a notarized artifact.
+- Hardened `scripts/release/package_app.sh --clean` so unrelated files in the output directory are preserved.
 
 ## 0.1.10 - 2026-06-13
 
 ### Changed
 
-- Published the architecture scalability refactor: profile resolution, controller selection, settings persistence, keyboard output session tracking, app workflow helpers, and mapping panel UI primitives are split into focused collaborators with expanded self-test coverage.
-- Kept release packaging on the existing locally signed, non-Apple-notarized preview path for this build.
-
-### Included from Unreleased
-
-- Added native Elite paddle support and per-app Paddlr recommendation columns to the game compatibility table.
-- Documented that the README's two-by-two paddle mapping layout mirrors the controller's physical paddle positions.
-- Added author attribution for Zach Skjaveland / Part of a Day.
+- Release packaging can now optionally sign with a Developer ID Application certificate, submit with `notarytool`, staple the accepted ticket, validate with `stapler`, and recreate the zip from the stapled app when maintainer credentials are available.
+- README launch guidance now covers the current locally signed, non-notarized preview flow while preserving the optional notarized release path.
 
 ## 0.1.9 - 2026-05-11
 

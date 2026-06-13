@@ -6,16 +6,20 @@ usage() {
 Usage: scripts/release/package_app.sh [options]
 
 Build and assemble dist/Paddlr.app from the SwiftPM Paddlr executable.
-The app bundle is locally signed so macOS can validate its bundle resources.
+By default the app bundle is locally signed so macOS can validate its bundle resources.
+For public downloads, pass a Developer ID Application identity and --notarize.
 
 Options:
   --output-dir <path>        Directory for release artifacts (default: dist)
-  --version <version>        CFBundleShortVersionString (default: latest v* tag or 0.1.9)
+  --version <version>        CFBundleShortVersionString (default: latest v* tag or 0.1.10)
   --build-number <number>    CFBundleVersion (default: UTC timestamp)
   --bundle-id <id>           CFBundleIdentifier (default: com.zachskjaveland.paddlr)
   --minimum-macos <version>  LSMinimumSystemVersion (default: 15.0)
+  --signing-identity <id>    codesign identity (default: ad-hoc local signing)
+  --notarize                 Submit the zip to Apple's notary service, staple the app, and recreate the zip
+  --notary-profile <name>    notarytool keychain profile (default: PADDLR_NOTARY_PROFILE or paddlr-notary)
   --skip-build               Reuse an existing .build release executable
-  --clean                    Remove the output directory before packaging
+  --clean                    Remove generated Paddlr artifacts from the output directory before packaging
   --create-zip               Create dist/Paddlr-<version>.zip after packaging
   --no-sign                  Skip local bundle signing (not recommended for downloads)
   -h, --help                 Show this help
@@ -23,6 +27,8 @@ Options:
 Examples:
   scripts/release/package_app.sh
   scripts/release/package_app.sh --clean --create-zip
+  xcrun notarytool store-credentials paddlr-notary --apple-id <apple-id> --team-id <team-id> --password <app-specific-password>
+  scripts/release/package_app.sh --clean --create-zip --signing-identity "Developer ID Application: Example (TEAMID)" --notarize
 USAGE
 }
 
@@ -38,6 +44,9 @@ skip_build=false
 clean_output=false
 create_zip=false
 sign_bundle=true
+signing_identity="${PADDLR_CODESIGN_IDENTITY:--}"
+notarize=false
+notary_profile="${PADDLR_NOTARY_PROFILE:-paddlr-notary}"
 version=""
 build_number=""
 
@@ -47,7 +56,7 @@ latest_tag_version() {
   if [[ -n "$tag" ]]; then
     printf '%s\n' "${tag#v}"
   else
-    printf '0.1.9\n'
+    printf '0.1.10\n'
   fi
 }
 
@@ -103,6 +112,23 @@ while [[ $# -gt 0 ]]; do
       minimum_macos=$2
       shift 2
       ;;
+    --signing-identity)
+      require_value "$1" "${2:-}"
+      signing_identity=$2
+      sign_bundle=true
+      shift 2
+      ;;
+    --notarize)
+      notarize=true
+      create_zip=true
+      sign_bundle=true
+      shift
+      ;;
+    --notary-profile)
+      require_value "$1" "${2:-}"
+      notary_profile=$2
+      shift 2
+      ;;
     --skip-build)
       skip_build=true
       shift
@@ -131,6 +157,23 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ "$notarize" == true && "$sign_bundle" != true ]]; then
+  echo "Notarization requires signing. Remove --no-sign." >&2
+  exit 2
+fi
+
+if [[ "$notarize" == true && "$signing_identity" == "-" ]]; then
+  echo "Notarization requires a Developer ID Application signing identity." >&2
+  echo "Pass --signing-identity \"Developer ID Application: <Name> (<Team ID>)\" or set PADDLR_CODESIGN_IDENTITY." >&2
+  exit 2
+fi
+
+if [[ "$notarize" == true && -z "$notary_profile" ]]; then
+  echo "Notarization requires a notarytool keychain profile." >&2
+  echo "Create one with: xcrun notarytool store-credentials paddlr-notary --apple-id <apple-id> --team-id <team-id> --password <app-specific-password>" >&2
+  exit 2
+fi
+
 if [[ -z "$version" ]]; then
   version=$(latest_tag_version)
 fi
@@ -156,8 +199,13 @@ case "$repo_root" in
     ;;
 esac
 
+clean_generated_artifacts() {
+  rm -rf "$output_dir/$bundle_name"
+  find "$output_dir" -maxdepth 1 -type f -name 'Paddlr-*.zip' -exec rm -f {} +
+}
+
 if [[ "$clean_output" == true ]]; then
-  rm -rf "$output_dir"
+  clean_generated_artifacts
 fi
 mkdir -p "$output_dir"
 app_path="$output_dir/$bundle_name"
@@ -195,26 +243,68 @@ plutil -lint "$info_plist" >/dev/null
 xattr -cr "$app_path" 2>/dev/null || true
 
 if [[ "$sign_bundle" == true ]]; then
-  codesign \
-    --force \
-    --sign - \
-    --requirements "=designated => identifier \"$bundle_id\"" \
-    "$app_path"
+  if [[ "$signing_identity" == "-" ]]; then
+    codesign \
+      --force \
+      --sign - \
+      --requirements "=designated => identifier \"$bundle_id\"" \
+      "$app_path"
+  else
+    if ! security find-identity -v -p codesigning | grep -F -- "$signing_identity" >/dev/null; then
+      echo "Signing identity not found in the keychain: $signing_identity" >&2
+      echo "Install the Developer ID Application certificate, then rerun packaging." >&2
+      exit 1
+    fi
+
+    codesign \
+      --force \
+      --timestamp \
+      --options runtime \
+      --sign "$signing_identity" \
+      "$macos_path/$executable_name"
+    codesign \
+      --force \
+      --timestamp \
+      --options runtime \
+      --sign "$signing_identity" \
+      "$app_path"
+  fi
   codesign --verify --strict --verbose=2 "$app_path"
 fi
 
-if [[ "$create_zip" == true ]]; then
-  final_zip="$output_dir/Paddlr-$version.zip"
-  rm -f "$final_zip"
+create_zip_archive() {
+  local zip_path=$1
+  rm -f "$zip_path"
   (
     cd "$output_dir"
-    zip -qry -X "$final_zip" "$bundle_name"
+    ditto -c -k --sequesterRsrc --keepParent "$bundle_name" "$zip_path"
   )
+}
+
+if [[ "$create_zip" == true ]]; then
+  final_zip="$output_dir/Paddlr-$version.zip"
+  create_zip_archive "$final_zip"
+fi
+
+if [[ "$notarize" == true ]]; then
+  echo "Submitting archive for notarization: $final_zip"
+  xcrun notarytool submit "$final_zip" --keychain-profile "$notary_profile" --wait
+  xcrun stapler staple "$app_path"
+  xcrun stapler validate "$app_path"
+  spctl -a -vvv -t exec "$app_path"
+  create_zip_archive "$final_zip"
+  echo "Notarized and stapled app bundle: $app_path"
+  echo "Recreated notarized archive: $final_zip"
+elif [[ "$create_zip" == true ]]; then
   echo "Created archive: $final_zip"
 fi
 
 if [[ "$sign_bundle" == true ]]; then
-  echo "Created locally signed app bundle: $app_path"
+  if [[ "$signing_identity" == "-" ]]; then
+    echo "Created locally signed app bundle: $app_path"
+  else
+    echo "Created Developer ID signed app bundle: $app_path"
+  fi
 else
   echo "Created unsigned app bundle: $app_path"
 fi

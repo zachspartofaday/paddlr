@@ -564,6 +564,68 @@ do {
 }
 
 do {
+    let mixedDefaultOutputResolver = ProfileResolver(
+        profiles: resolverProfiles,
+        appRules: [
+            AppProfileRule(
+                bundleIdentifier: "com.example.MixedOutput",
+                appName: "Mixed Output",
+                controllerIdentifier: sourceBOne.controllerIdentifier,
+                action: .useProfile(appProfileID)
+            )
+        ],
+        controllerConfigurations: [],
+        defaultProfileID: defaultProfileID,
+        selectedProfileID: defaultProfileID,
+        outputEnabled: true,
+        defaultApplicationOutputEnabled: false
+    )
+    let activeControllerIdentifiers: Set<String> = [
+        sourceAOne.controllerIdentifier,
+        sourceBOne.controllerIdentifier
+    ]
+    let disabledControllerIdentifiers = Set(activeControllerIdentifiers.filter {
+        !mixedDefaultOutputResolver.effectiveOutputEnabled(
+            bundleIdentifier: "com.example.MixedOutput",
+            controllerIdentifier: $0
+        )
+    })
+
+    expectEqual(
+        disabledControllerIdentifiers,
+        [sourceAOne.controllerIdentifier],
+        "resolver default output disabled only for controllers without active app rule"
+    )
+
+    var tracker = KeyboardOutputSessionTracker()
+    expectEqual(
+        tracker.setKeyboard(f13Mapping, isPressed: true, source: sourceAOne),
+        .keyDown(f13Mapping),
+        "keyboard tracker default output disabled shared first key down"
+    )
+    expectEqual(
+        tracker.setKeyboard(f14Mapping, isPressed: true, source: sourceATwo),
+        .keyDown(f14Mapping),
+        "keyboard tracker default output disabled unique key down"
+    )
+    expectEqual(
+        tracker.setKeyboard(f13Mapping, isPressed: true, source: sourceBOne),
+        nil,
+        "keyboard tracker default output disabled shared enabled key down"
+    )
+    expectEqual(
+        tracker.releaseAll(for: disabledControllerIdentifiers),
+        [.keyUp(f14Mapping)],
+        "keyboard tracker default output disabled releases only disabled controller keys"
+    )
+    expectEqual(
+        tracker.setKeyboard(f13Mapping, isPressed: false, source: sourceBOne),
+        .keyUp(f13Mapping),
+        "keyboard tracker default output disabled keeps shared enabled key down"
+    )
+}
+
+do {
     var tracker = KeyboardOutputSessionTracker()
     _ = tracker.setKeyboard(f13Mapping, isPressed: true, source: sourceAOne)
     _ = tracker.setKeyboard(f14Mapping, isPressed: true, source: sourceBOne)

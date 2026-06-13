@@ -12,7 +12,7 @@ Paddlr is intended as a lightweight companion to macOS's native controller profi
 | Mac hardware | Tested on Apple silicon Macs. Intel Macs are not yet validated. |
 | Controller | Xbox Elite Series 2 over Bluetooth. Additional controller variants and firmware versions need validation. |
 | Controller profile | Use **Profile 0** / no profile LEDs for distinct paddle input. |
-| Output | Keyboard output through macOS Accessibility permission. Virtual gamepad/Xbox button output is not implemented yet. |
+| Output | Keyboard output through macOS Accessibility permission. Virtual gamepad/Xbox button output is not supported because it requires Apple-granted virtual HID/DriverKit entitlements. |
 
 ## Controller IDs and firmware versions
 

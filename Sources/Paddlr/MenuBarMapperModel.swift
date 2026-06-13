@@ -44,8 +44,8 @@ final class MenuBarMapperModel: ObservableObject {
             settingsStore.writeDefaultApplicationOutputEnabled(defaultApplicationOutputEnabled)
             appendEvent("[Output] Default application output \(defaultApplicationOutputEnabled ? "enabled" : "disabled").")
 
-            if !defaultApplicationOutputEnabled, activeAppRule == nil {
-                releasePostedKeys(reason: "default application output disabled")
+            if !defaultApplicationOutputEnabled {
+                releasePostedKeysForControllersWithDisabledOutput(reason: "default application output disabled")
             }
             updateStatusItemState()
         }
@@ -963,6 +963,13 @@ final class MenuBarMapperModel: ObservableObject {
             performKeyboardOutputCommand(command)
             appendReleaseEvent(for: command, reason: reason)
         }
+    }
+
+    private func releasePostedKeysForControllersWithDisabledOutput(reason: String) {
+        let disabledControllerIdentifiers = Set(livePressedPaddlesByController.keys.filter {
+            !effectiveOutputEnabled(forControllerIdentifier: $0)
+        })
+        releasePostedKeys(for: disabledControllerIdentifiers, reason: reason)
     }
 
     private func releasePostedKeys(reason: String) {
