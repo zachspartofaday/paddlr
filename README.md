@@ -184,9 +184,9 @@ swift run PaddlrHIDProbe
 swift run PaddlrRawReportProbe
 ```
 
-## Known issues and planned features
+## Known issues, limitations, and planned features
 
-- **Xbox/gamepad button output is planned.** Paddlr currently sends keyboard output, not virtual gamepad buttons such as A/B/X/Y. For standard Xbox button rebinding, use macOS's native controller profiles.
+- **Xbox/gamepad button output is not supported.** Paddlr sends keyboard output only. Virtual gamepad buttons such as A/B/X/Y would require Apple-granted virtual HID/DriverKit entitlements that Paddlr does not have. For standard Xbox button rebinding, use macOS's native controller profiles.
 - **USB wired Elite 2 support needs more work.** Bluetooth paddle input works through the currently validated path; a lower-level USB backend is still under investigation.
 - **More controller variants need validation.** Additional Elite controller models, firmware versions, connection modes, and Intel Macs should be tested before broad compatibility claims.
 - **Left/right modifier-specific mappings are planned.** Current modifier mappings are generic Shift/Control/Option/Command rather than side-specific variants.

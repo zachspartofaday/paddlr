@@ -109,6 +109,6 @@ All notable public-facing changes to Paddlr will be documented in this file.
 
 ### Known limitations
 
-- Keyboard output is supported; virtual gamepad/Xbox button output is planned for later.
+- Keyboard output is supported; virtual gamepad/Xbox button output is not supported because it would require Apple-granted virtual HID/DriverKit entitlements.
 - USB wired Elite 2 paddle support is still under investigation.
 - Additional controller variants, firmware versions, connection modes, and Intel Macs need validation.
