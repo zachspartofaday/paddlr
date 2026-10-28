@@ -75,6 +75,8 @@ After pressing either permission button and returning to Paddlr, the app may pro
 
 On some Macs, granting Accessibility also satisfies Paddlr's controller input access check. In that case the panel may show **Controller Input Access: Ready** even if Paddlr does not appear in the Input Monitoring allow list.
 
+New builds use the app identifier `com.partofaday.paddlr`. Upgrading from an earlier app identifier may require granting permissions again and reconfiguring preferences.
+
 When updating from an earlier preview build, macOS may ask for permissions again. If Paddlr still appears untrusted after an update or move, remove the old Paddlr entry from Accessibility/Input Monitoring, add the current `Paddlr.app` from its final location, and enable it.
 
 ### 3. Set the controller to Profile 0
