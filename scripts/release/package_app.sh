@@ -13,7 +13,7 @@ Options:
   --output-dir <path>        Directory for release artifacts (default: dist)
   --version <version>        CFBundleShortVersionString (default: latest v* tag or 0.1.10)
   --build-number <number>    CFBundleVersion (default: UTC timestamp)
-  --bundle-id <id>           CFBundleIdentifier (default: com.zachskjaveland.paddlr)
+  --bundle-id <id>           CFBundleIdentifier (default: com.partofaday.paddlr)
   --minimum-macos <version>  LSMinimumSystemVersion (default: 15.0)
   --signing-identity <id>    codesign identity (default: ad-hoc local signing)
   --notarize                 Submit the zip to Apple's notary service, staple the app, and recreate the zip
@@ -38,7 +38,7 @@ app_icon_path="$repo_root/Resources/Paddlr/AppIcon.icns"
 output_dir="$repo_root/dist"
 bundle_name="Paddlr.app"
 executable_name="Paddlr"
-bundle_id="com.zachskjaveland.paddlr"
+bundle_id="com.partofaday.paddlr"
 minimum_macos="15.0"
 skip_build=false
 clean_output=false
