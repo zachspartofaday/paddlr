@@ -216,7 +216,7 @@ See [Compatibility Notes](COMPATIBILITY.md) for current hardware, controller-pro
 
 ## Author
 
-Created and maintained by Zach Skjaveland / Part of a Day.
+Created and maintained by Zach S / Part of a Day.
 
 ## License
 
